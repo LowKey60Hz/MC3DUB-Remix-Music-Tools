@@ -1,0 +1,30 @@
+{
+  "Date": "2026-11-13T00:53:57.5099358-08:00",
+  "Deleted": [
+    {
+      "Path": "C:\\Users\\PCS Admin\\Desktop\\Midnight Club 3 Ultimate Music Tools Project\\VIP ISO Analyzer\\MC3_VIP_v11A_Rebuilt_ASSETS_Test.iso",
+      "Bytes": 8539963392
+    },
+    {
+      "Path": "C:\\Users\\PCS Admin\\Desktop\\Midnight Club 3 Ultimate Music Tools Project\\VIP ISO Analyzer\\MC3_VIP_v11A_Optimized_v4_Test.iso",
+      "Bytes": 8539963392
+    },
+    {
+      "Path": "C:\\Users\\PCS Admin\\Desktop\\Midnight Club 3 Ultimate Music Tools Project\\VIP ISO Analyzer\\MC3_VIP_v11A_Modified_Compressed_Test.iso",
+      "Bytes": 8539963392
+    },
+    {
+      "Path": "C:\\Users\\PCS Admin\\Desktop\\Midnight Club 3 Ultimate Music Tools Project\\VIP ISO Analyzer\\MC3_VIP_v11A_Modified_ASSETS_Test.iso",
+      "Bytes": 8539963392
+    },
+    {
+      "Path": "C:\\Users\\PCS Admin\\Desktop\\Midnight Club 3 Ultimate Music Tools Project\\VIP ISO Analyzer\\Boundary_Probes\\MC3_ASSETS_below_2GiB.iso",
+      "Bytes": 8539963392
+    },
+    {
+      "Path": "C:\\Users\\PCS Admin\\Desktop\\Midnight Club 3 Ultimate Music Tools Project\\VIP ISO Analyzer\\Boundary_Probes\\MC3_ASSETS_above_2GiB.iso",
+      "Bytes": 8539963392
+    }
+  ],
+  "FreedBytes": 51239780352.0
+}

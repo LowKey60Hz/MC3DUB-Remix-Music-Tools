@@ -1,0 +1,70 @@
+{
+  "mode": "PROPOSAL ONLY \u2014 NOT APPROVED FOR WRITING",
+  "streams": {
+    "files": 2214,
+    "projected_bytes": 1087309824,
+    "payload_bytes": 1084990656,
+    "manifest_names": 2214,
+    "note": "Size projection only; payload identity and playback are not verified."
+  },
+  "assets_bytes": 1805909737,
+  "original_archive_end_exclusive_sector": 1811133,
+  "proposed_archive_end_exclusive_sector": 1836375,
+  "extra_bytes_beyond_original_archive_region": 51695616,
+  "remaining_bytes_inside_original_region": 0,
+  "proposed_layout": [
+    {
+      "name": "TEXTURE.DAT",
+      "start_sector": 9702,
+      "end_exclusive_sector": 397807,
+      "payload_bytes": 794839040,
+      "allocated_bytes": 794839040,
+      "original_start_sector": 9702
+    },
+    {
+      "name": "STREAMS.DAT",
+      "start_sector": 397807,
+      "end_exclusive_sector": 928720,
+      "payload_bytes": 1087309824,
+      "allocated_bytes": 1087309824,
+      "original_start_sector": 397807
+    },
+    {
+      "name": "BANKS.DAT",
+      "start_sector": 928720,
+      "end_exclusive_sector": 954583,
+      "payload_bytes": 52967424,
+      "allocated_bytes": 52967424,
+      "original_start_sector": 902298
+    },
+    {
+      "name": "ASSETS.DAT",
+      "start_sector": 954583,
+      "end_exclusive_sector": 1836375,
+      "payload_bytes": 1805909737,
+      "allocated_bytes": 1805910016,
+      "original_start_sector": 928161
+    }
+  ],
+  "protected_allocation_overlaps": [],
+  "cinematics_checked": 106,
+  "legacy_manifest_region_all_zero": true,
+  "post_assets_comparison": {
+    "bytes": 539820032,
+    "different_chunks": 0,
+    "all_equal_to_v10c": true,
+    "note": "Equality is provenance evidence, not proof of free space."
+  },
+  "udf_warnings": [
+    {
+      "path": "/assets.dat",
+      "issue": "Extent length includes ECMA extent-type bits. Diagnostic uses observed full 32-bit length matching information length; not a standard recorded-extent interpretation.",
+      "raw_extent_length": 1808326656
+    }
+  ],
+  "blockers": [
+    "Proposal extends into unidentified nonzero data beyond the original ASSETS allocation.",
+    "Production builder has no v1.1-A expansion profile; relocation and UDF extent encoding require implementation and game testing."
+  ],
+  "validation_limit": "Uses prior v5 content validation snapshot; no ISO hash, new archive build, or PCSX2 test performed."
+}

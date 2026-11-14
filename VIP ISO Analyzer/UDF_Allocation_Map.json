@@ -1,0 +1,918 @@
+{
+  "iso": "C:\\Users\\PCS Admin\\Desktop\\Midnight Club 3 Ultimate Music Tools Project\\Base ISO's\\Midnight Club 3 VIP v1.1-A.iso",
+  "partition_start": 266,
+  "partition_blocks": 2084693,
+  "files": [
+    {
+      "path": "/slus_213.55",
+      "icb_sector": 278,
+      "bytes": 5264872,
+      "extents": [
+        {
+          "sector": 544,
+          "bytes": 5264872
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/system.cnf",
+      "icb_sector": 279,
+      "bytes": 55,
+      "extents": [
+        {
+          "sector": 3115,
+          "bytes": 55
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/dnas.rel",
+      "icb_sector": 280,
+      "bytes": 1234284,
+      "extents": [
+        {
+          "sector": 3116,
+          "bytes": 1234284
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/system/audvag.irx",
+      "icb_sector": 281,
+      "bytes": 48500,
+      "extents": [
+        {
+          "sector": 3719,
+          "bytes": 48500
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/system/dev9.irx",
+      "icb_sector": 282,
+      "bytes": 13757,
+      "extents": [
+        {
+          "sector": 3743,
+          "bytes": 13757
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/system/dnas280.img",
+      "icb_sector": 283,
+      "bytes": 272705,
+      "extents": [
+        {
+          "sector": 3750,
+          "bytes": 272705
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/system/ent_devm.irx",
+      "icb_sector": 284,
+      "bytes": 13445,
+      "extents": [
+        {
+          "sector": 3884,
+          "bytes": 13445
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/system/ent_smap.irx",
+      "icb_sector": 285,
+      "bytes": 31173,
+      "extents": [
+        {
+          "sector": 3891,
+          "bytes": 31173
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/system/eznetcnf.irx",
+      "icb_sector": 286,
+      "bytes": 7676,
+      "extents": [
+        {
+          "sector": 3907,
+          "bytes": 7676
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/system/ioprp280.img",
+      "icb_sector": 287,
+      "bytes": 269889,
+      "extents": [
+        {
+          "sector": 3911,
+          "bytes": 269889
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/system/lgaud.irx",
+      "icb_sector": 288,
+      "bytes": 49085,
+      "extents": [
+        {
+          "sector": 4043,
+          "bytes": 49085
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/system/lgdevW.irx",
+      "icb_sector": 289,
+      "bytes": 52285,
+      "extents": [
+        {
+          "sector": 4067,
+          "bytes": 52285
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/system/libsd.irx",
+      "icb_sector": 290,
+      "bytes": 28605,
+      "extents": [
+        {
+          "sector": 4093,
+          "bytes": 28605
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/system/mcman.irx",
+      "icb_sector": 291,
+      "bytes": 95909,
+      "extents": [
+        {
+          "sector": 4107,
+          "bytes": 95909
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/system/mcserv.irx",
+      "icb_sector": 292,
+      "bytes": 7417,
+      "extents": [
+        {
+          "sector": 4154,
+          "bytes": 7417
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/system/modhsyn.irx",
+      "icb_sector": 293,
+      "bytes": 61069,
+      "extents": [
+        {
+          "sector": 4158,
+          "bytes": 61069
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/system/modmidi.irx",
+      "icb_sector": 294,
+      "bytes": 21965,
+      "extents": [
+        {
+          "sector": 4188,
+          "bytes": 21965
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/system/modsein.irx",
+      "icb_sector": 295,
+      "bytes": 9393,
+      "extents": [
+        {
+          "sector": 4199,
+          "bytes": 9393
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/system/netcnf.irx",
+      "icb_sector": 296,
+      "bytes": 65805,
+      "extents": [
+        {
+          "sector": 4204,
+          "bytes": 65805
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/system/padman.irx",
+      "icb_sector": 297,
+      "bytes": 43813,
+      "extents": [
+        {
+          "sector": 4237,
+          "bytes": 43813
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/system/scream.irx",
+      "icb_sector": 298,
+      "bytes": 96484,
+      "extents": [
+        {
+          "sector": 4259,
+          "bytes": 96484
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/system/sdhd.irx",
+      "icb_sector": 299,
+      "bytes": 14685,
+      "extents": [
+        {
+          "sector": 4307,
+          "bytes": 14685
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/system/sdrdrv.irx",
+      "icb_sector": 300,
+      "bytes": 9161,
+      "extents": [
+        {
+          "sector": 4315,
+          "bytes": 9161
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/system/sio2man.irx",
+      "icb_sector": 301,
+      "bytes": 6641,
+      "extents": [
+        {
+          "sector": 4320,
+          "bytes": 6641
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/system/smap.irx",
+      "icb_sector": 302,
+      "bytes": 17105,
+      "extents": [
+        {
+          "sector": 4324,
+          "bytes": 17105
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/system/sndrv100.irx",
+      "icb_sector": 303,
+      "bytes": 13136,
+      "extents": [
+        {
+          "sector": 4333,
+          "bytes": 13136
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/system/sndrv200.irx",
+      "icb_sector": 304,
+      "bytes": 21448,
+      "extents": [
+        {
+          "sector": 4340,
+          "bytes": 21448
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/system/sndrv202.irx",
+      "icb_sector": 305,
+      "bytes": 13136,
+      "extents": [
+        {
+          "sector": 4351,
+          "bytes": 13136
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/system/sndscrm.irx",
+      "icb_sector": 306,
+      "bytes": 36360,
+      "extents": [
+        {
+          "sector": 4358,
+          "bytes": 36360
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/system/snstkrel.irx",
+      "icb_sector": 307,
+      "bytes": 269628,
+      "extents": [
+        {
+          "sector": 4376,
+          "bytes": 269628
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/system/usbd.irx",
+      "icb_sector": 308,
+      "bytes": 34969,
+      "extents": [
+        {
+          "sector": 4508,
+          "bytes": 34969
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/system/usbkb.irx",
+      "icb_sector": 309,
+      "bytes": 12853,
+      "extents": [
+        {
+          "sector": 4526,
+          "bytes": 12853
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/cnf/icon_en.sys",
+      "icb_sector": 310,
+      "bytes": 964,
+      "extents": [
+        {
+          "sector": 4533,
+          "bytes": 964
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/cnf/SYS_NET.ICO",
+      "icb_sector": 311,
+      "bytes": 33688,
+      "extents": [
+        {
+          "sector": 4534,
+          "bytes": 33688
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/netgui/bg.rgb",
+      "icb_sector": 312,
+      "bytes": 860160,
+      "extents": [
+        {
+          "sector": 4551,
+          "bytes": 860160
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/netgui/bg2.rgb",
+      "icb_sector": 313,
+      "bytes": 1146880,
+      "extents": [
+        {
+          "sector": 4971,
+          "bytes": 1146880
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/netgui/bg_pal.rgb",
+      "icb_sector": 314,
+      "bytes": 983040,
+      "extents": [
+        {
+          "sector": 5531,
+          "bytes": 983040
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/netgui/eff.bd",
+      "icb_sector": 315,
+      "bytes": 127536,
+      "extents": [
+        {
+          "sector": 6011,
+          "bytes": 127536
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/netgui/eff.hd",
+      "icb_sector": 316,
+      "bytes": 560,
+      "extents": [
+        {
+          "sector": 6074,
+          "bytes": 560
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/netgui/european.pf",
+      "icb_sector": 317,
+      "bytes": 637456,
+      "extents": [
+        {
+          "sector": 6075,
+          "bytes": 637456
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/netgui/european_wh.pf",
+      "icb_sector": 318,
+      "bytes": 637456,
+      "extents": [
+        {
+          "sector": 6387,
+          "bytes": 637456
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/netgui/iopmods/dev9.irx",
+      "icb_sector": 319,
+      "bytes": 14309,
+      "extents": [
+        {
+          "sector": 6699,
+          "bytes": 14309
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/netgui/iopmods/ezmidi.irx",
+      "icb_sector": 320,
+      "bytes": 11609,
+      "extents": [
+        {
+          "sector": 6706,
+          "bytes": 11609
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/netgui/iopmods/inet.irx",
+      "icb_sector": 321,
+      "bytes": 143661,
+      "extents": [
+        {
+          "sector": 6712,
+          "bytes": 143661
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/netgui/iopmods/inetctl.irx",
+      "icb_sector": 322,
+      "bytes": 24861,
+      "extents": [
+        {
+          "sector": 6783,
+          "bytes": 24861
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/netgui/iopmods/ioprp300.img",
+      "icb_sector": 323,
+      "bytes": 275345,
+      "extents": [
+        {
+          "sector": 6796,
+          "bytes": 275345
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/netgui/iopmods/libnet.irx",
+      "icb_sector": 324,
+      "bytes": 6693,
+      "extents": [
+        {
+          "sector": 6931,
+          "bytes": 6693
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/netgui/iopmods/libsd.irx",
+      "icb_sector": 325,
+      "bytes": 30085,
+      "extents": [
+        {
+          "sector": 6935,
+          "bytes": 30085
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/netgui/iopmods/mcman.irx",
+      "icb_sector": 326,
+      "bytes": 96181,
+      "extents": [
+        {
+          "sector": 6950,
+          "bytes": 96181
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/netgui/iopmods/mcserv.irx",
+      "icb_sector": 327,
+      "bytes": 7385,
+      "extents": [
+        {
+          "sector": 6997,
+          "bytes": 7385
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/netgui/iopmods/modhsyn.irx",
+      "icb_sector": 328,
+      "bytes": 63037,
+      "extents": [
+        {
+          "sector": 7001,
+          "bytes": 63037
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/netgui/iopmods/modmidi.irx",
+      "icb_sector": 329,
+      "bytes": 21941,
+      "extents": [
+        {
+          "sector": 7032,
+          "bytes": 21941
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/netgui/iopmods/msifrpc.irx",
+      "icb_sector": 330,
+      "bytes": 8105,
+      "extents": [
+        {
+          "sector": 7043,
+          "bytes": 8105
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/netgui/iopmods/netcnf.irx",
+      "icb_sector": 331,
+      "bytes": 65909,
+      "extents": [
+        {
+          "sector": 7047,
+          "bytes": 65909
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/netgui/iopmods/ntgui2.irx",
+      "icb_sector": 332,
+      "bytes": 31029,
+      "extents": [
+        {
+          "sector": 7080,
+          "bytes": 31029
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/netgui/iopmods/padman.irx",
+      "icb_sector": 333,
+      "bytes": 45925,
+      "extents": [
+        {
+          "sector": 7096,
+          "bytes": 45925
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/netgui/iopmods/ppp.irx",
+      "icb_sector": 334,
+      "bytes": 102589,
+      "extents": [
+        {
+          "sector": 7119,
+          "bytes": 102589
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/netgui/iopmods/pppoe.irx",
+      "icb_sector": 335,
+      "bytes": 17305,
+      "extents": [
+        {
+          "sector": 7170,
+          "bytes": 17305
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/netgui/iopmods/sdrdrv.irx",
+      "icb_sector": 336,
+      "bytes": 9161,
+      "extents": [
+        {
+          "sector": 7179,
+          "bytes": 9161
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/netgui/iopmods/sio2man.irx",
+      "icb_sector": 337,
+      "bytes": 6641,
+      "extents": [
+        {
+          "sector": 7184,
+          "bytes": 6641
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/netgui/iopmods/smap.irx",
+      "icb_sector": 338,
+      "bytes": 17089,
+      "extents": [
+        {
+          "sector": 7188,
+          "bytes": 17089
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/netgui/iopmods/usbd.irx",
+      "icb_sector": 339,
+      "bytes": 34993,
+      "extents": [
+        {
+          "sector": 7197,
+          "bytes": 34993
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/netgui/iopmods/usbkb.irx",
+      "icb_sector": 340,
+      "bytes": 12853,
+      "extents": [
+        {
+          "sector": 7215,
+          "bytes": 12853
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/netgui/jis2ucs.bin",
+      "icb_sector": 341,
+      "bytes": 131072,
+      "extents": [
+        {
+          "sector": 7222,
+          "bytes": 131072
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/netgui/ucs2jis.bin",
+      "icb_sector": 342,
+      "bytes": 131072,
+      "extents": [
+        {
+          "sector": 7286,
+          "bytes": 131072
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/ntguidvd.elf",
+      "icb_sector": 343,
+      "bytes": 4815512,
+      "extents": [
+        {
+          "sector": 7350,
+          "bytes": 4815512
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/texture.dat",
+      "icb_sector": 344,
+      "bytes": 794839040,
+      "extents": [
+        {
+          "sector": 9702,
+          "bytes": 794839040
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/streams.dat",
+      "icb_sector": 345,
+      "bytes": 1033197568,
+      "extents": [
+        {
+          "sector": 397807,
+          "bytes": 1033197568
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/banks.dat",
+      "icb_sector": 346,
+      "bytes": 52967424,
+      "extents": [
+        {
+          "sector": 902298,
+          "bytes": 52967424
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/assets.dat",
+      "icb_sector": 347,
+      "bytes": 1808326656,
+      "extents": [
+        {
+          "sector": 928161,
+          "bytes": 1808326656
+        }
+      ],
+      "allocation_mode": 0
+    }
+  ],
+  "directories": [
+    {
+      "path": "/",
+      "icb_sector": 273,
+      "bytes": 684,
+      "extents": [
+        {
+          "sector": 268,
+          "bytes": 684
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/system",
+      "icb_sector": 274,
+      "bytes": 1820,
+      "extents": [
+        {
+          "sector": 269,
+          "bytes": 1820
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/cnf",
+      "icb_sector": 275,
+      "bytes": 168,
+      "extents": [
+        {
+          "sector": 270,
+          "bytes": 168
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/netgui",
+      "icb_sector": 276,
+      "bytes": 628,
+      "extents": [
+        {
+          "sector": 271,
+          "bytes": 628
+        }
+      ],
+      "allocation_mode": 0
+    },
+    {
+      "path": "/netgui/iopmods",
+      "icb_sector": 277,
+      "bytes": 1364,
+      "extents": [
+        {
+          "sector": 272,
+          "bytes": 1364
+        }
+      ],
+      "allocation_mode": 0
+    }
+  ],
+  "warnings": [
+    {
+      "path": "/assets.dat",
+      "issue": "Extent length includes ECMA extent-type bits. Diagnostic uses observed full 32-bit length matching information length; not a standard recorded-extent interpretation.",
+      "raw_extent_length": 1808326656
+    }
+  ],
+  "files_touching_post_assets_region": [],
+  "limitation": "Maps reachable UDF files only; not certification of free space or game relocation support."
+}

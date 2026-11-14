@@ -1,0 +1,268 @@
+{
+  "start_sector": 1811133,
+  "end_exclusive_sector": 2074717,
+  "bytes_scanned": 539820032,
+  "nonzero_chunks": [
+    {
+      "start_sector": 1811133,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 1815229,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 1819325,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 1823421,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 1827517,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 1831613,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 1835709,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 1839805,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 1843901,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 1847997,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 1852093,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 1856189,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 1860285,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 1864381,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 1868477,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 1872573,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 1876669,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 1880765,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 1884861,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 1888957,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 1893053,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 1897149,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 1901245,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 1905341,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 1909437,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 1913533,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 1917629,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 1921725,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 1925821,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 1929917,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 1934013,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 1938109,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 1942205,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 1946301,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 1950397,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 1954493,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 1958589,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 1962685,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 1966781,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 1970877,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 1974973,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 1979069,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 1983165,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 1987261,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 1991357,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 1995453,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 1999549,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 2003645,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 2007741,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 2011837,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 2015933,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 2020029,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 2024125,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 2028221,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 2032317,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 2036413,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 2040509,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 2044605,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 2048701,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 2052797,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 2056893,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 2060989,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 2065085,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 2069181,
+      "bytes": 8388608
+    },
+    {
+      "start_sector": 2073277,
+      "bytes": 2949120
+    }
+  ],
+  "interpretation": "Not proof of free space; UDF allocation and both layer layouts still require validation."
+}

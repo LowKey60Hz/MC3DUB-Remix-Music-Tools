@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-13",
+  "evidence": "User-reported PCSX2 observations",
+  "image": "MC3_VIP_v10C_Expanded_Music_Test.iso",
+  "result": "PASS_REPORTED_WORKFLOWS",
+  "observations": [
+    "Game boots and loads",
+    "Cinematic intros and logos play",
+    "Races work",
+    "Garage works",
+    "Free roam works",
+    "Custom music plays in reported gameplay modes"
+  ],
+  "scope": "Runtime evidence for this expanded v1.0-C image and reported workflows; not an absolute archive maximum or Retail runtime validation.",
+  "emulator_version_and_settings": "Not recorded"
+}

@@ -1,0 +1,12 @@
+{
+  "source": "C:\\Users\\PCS Admin\\Desktop\\Midnight Club 3 Ultimate Music Tools Project\\Base ISO's\\Midnight Club 3 - DUB Edition Remix (USA).iso",
+  "output": "C:\\Users\\PCS Admin\\Desktop\\Midnight Club 3 Ultimate Music Tools Project\\VIP ISO Analyzer\\MC3_Retail_Expanded_Music_Test.iso",
+  "sha256": "530066993e82e60a80b0464981545e5ef9bbf71627713abbcb0a1131deacf9c0",
+  "verified_assets_records": 15100,
+  "active_sources_verified": true,
+  "compiled_inputs_unchanged": true,
+  "automated_build_and_preservation_checks_passed": true,
+  "runtime_status": "NOT TESTED",
+  "reimport_classification": "UNSUPPORTED_RETAIL_RELOCATED_LAYOUT",
+  "note": "Build from the verified original Retail source; relocated output re-import is intentionally blocked instead of being mislabeled as VIP."
+}

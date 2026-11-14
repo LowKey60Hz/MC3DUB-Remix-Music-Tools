@@ -1,0 +1,9 @@
+{
+  "preflight_passed": true,
+  "streams_records": 2214,
+  "assets_records": 17471,
+  "output": "C:\\Users\\PCS Admin\\Desktop\\Midnight Club 3 Ultimate Music Tools Project\\VIP ISO Analyzer\\MC3_VIP_v11A_Expansion_Experimental.iso",
+  "built": true,
+  "warning": "Expansion overwrites suspected leftover data; PCSX2 testing required.",
+  "output_sha256": "3cef6559a5b2e8797b1eed4ed774f3c0ee4afec9b159f1c4defe4d835f0b34e3"
+}

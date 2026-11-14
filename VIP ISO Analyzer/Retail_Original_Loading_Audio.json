@@ -1,0 +1,616 @@
+{
+  "source": "C:\\Users\\PCS Admin\\Desktop\\Midnight Club 3 Ultimate Music Tools Project\\Base ISO's\\Midnight Club 3 - DUB Edition Remix (USA).iso",
+  "source_sha256": "de199f7e7f57b7cb603a129217f7482d50644fd66558450dfeb5612857b732f9",
+  "assets_sector": 1369534,
+  "assets_allocation": 1444214784,
+  "current_tool_limit_bytes": 460800,
+  "original_slot_count": 18,
+  "original_loading_record_count": 26,
+  "smallest_original_decoded_bytes": 169302,
+  "largest_original_decoded_bytes": 291904,
+  "original_records_equal_to_tool_limit": 0,
+  "original_records_above_tool_limit": 0,
+  "slots": [
+    {
+      "slot": 1,
+      "record_count": 2,
+      "decoded_variants": 1,
+      "decoded_sizes": [
+        256204
+      ],
+      "stored_sizes": [
+        248120
+      ],
+      "matches_current_tool_limit": false,
+      "exceeds_current_tool_limit": false
+    },
+    {
+      "slot": 2,
+      "record_count": 1,
+      "decoded_variants": 1,
+      "decoded_sizes": [
+        291904
+      ],
+      "stored_sizes": [
+        284297
+      ],
+      "matches_current_tool_limit": false,
+      "exceeds_current_tool_limit": false
+    },
+    {
+      "slot": 3,
+      "record_count": 2,
+      "decoded_variants": 1,
+      "decoded_sizes": [
+        259118
+      ],
+      "stored_sizes": [
+        253380
+      ],
+      "matches_current_tool_limit": false,
+      "exceeds_current_tool_limit": false
+    },
+    {
+      "slot": 4,
+      "record_count": 2,
+      "decoded_variants": 1,
+      "decoded_sizes": [
+        242452
+      ],
+      "stored_sizes": [
+        232409
+      ],
+      "matches_current_tool_limit": false,
+      "exceeds_current_tool_limit": false
+    },
+    {
+      "slot": 5,
+      "record_count": 1,
+      "decoded_variants": 1,
+      "decoded_sizes": [
+        270812
+      ],
+      "stored_sizes": [
+        262403
+      ],
+      "matches_current_tool_limit": false,
+      "exceeds_current_tool_limit": false
+    },
+    {
+      "slot": 6,
+      "record_count": 2,
+      "decoded_variants": 1,
+      "decoded_sizes": [
+        244270
+      ],
+      "stored_sizes": [
+        240400
+      ],
+      "matches_current_tool_limit": false,
+      "exceeds_current_tool_limit": false
+    },
+    {
+      "slot": 7,
+      "record_count": 1,
+      "decoded_variants": 1,
+      "decoded_sizes": [
+        247890
+      ],
+      "stored_sizes": [
+        231534
+      ],
+      "matches_current_tool_limit": false,
+      "exceeds_current_tool_limit": false
+    },
+    {
+      "slot": 8,
+      "record_count": 1,
+      "decoded_variants": 1,
+      "decoded_sizes": [
+        252876
+      ],
+      "stored_sizes": [
+        247635
+      ],
+      "matches_current_tool_limit": false,
+      "exceeds_current_tool_limit": false
+    },
+    {
+      "slot": 9,
+      "record_count": 1,
+      "decoded_variants": 1,
+      "decoded_sizes": [
+        255304
+      ],
+      "stored_sizes": [
+        242784
+      ],
+      "matches_current_tool_limit": false,
+      "exceeds_current_tool_limit": false
+    },
+    {
+      "slot": 10,
+      "record_count": 2,
+      "decoded_variants": 1,
+      "decoded_sizes": [
+        237986
+      ],
+      "stored_sizes": [
+        229164
+      ],
+      "matches_current_tool_limit": false,
+      "exceeds_current_tool_limit": false
+    },
+    {
+      "slot": 11,
+      "record_count": 1,
+      "decoded_variants": 1,
+      "decoded_sizes": [
+        243734
+      ],
+      "stored_sizes": [
+        239182
+      ],
+      "matches_current_tool_limit": false,
+      "exceeds_current_tool_limit": false
+    },
+    {
+      "slot": 12,
+      "record_count": 1,
+      "decoded_variants": 1,
+      "decoded_sizes": [
+        236188
+      ],
+      "stored_sizes": [
+        221955
+      ],
+      "matches_current_tool_limit": false,
+      "exceeds_current_tool_limit": false
+    },
+    {
+      "slot": 13,
+      "record_count": 1,
+      "decoded_variants": 1,
+      "decoded_sizes": [
+        253224
+      ],
+      "stored_sizes": [
+        230451
+      ],
+      "matches_current_tool_limit": false,
+      "exceeds_current_tool_limit": false
+    },
+    {
+      "slot": 14,
+      "record_count": 1,
+      "decoded_variants": 1,
+      "decoded_sizes": [
+        169302
+      ],
+      "stored_sizes": [
+        163107
+      ],
+      "matches_current_tool_limit": false,
+      "exceeds_current_tool_limit": false
+    },
+    {
+      "slot": 15,
+      "record_count": 1,
+      "decoded_variants": 1,
+      "decoded_sizes": [
+        230344
+      ],
+      "stored_sizes": [
+        219837
+      ],
+      "matches_current_tool_limit": false,
+      "exceeds_current_tool_limit": false
+    },
+    {
+      "slot": 16,
+      "record_count": 2,
+      "decoded_variants": 1,
+      "decoded_sizes": [
+        261544
+      ],
+      "stored_sizes": [
+        248075
+      ],
+      "matches_current_tool_limit": false,
+      "exceeds_current_tool_limit": false
+    },
+    {
+      "slot": 17,
+      "record_count": 2,
+      "decoded_variants": 1,
+      "decoded_sizes": [
+        223708
+      ],
+      "stored_sizes": [
+        210607
+      ],
+      "matches_current_tool_limit": false,
+      "exceeds_current_tool_limit": false
+    },
+    {
+      "slot": 18,
+      "record_count": 2,
+      "decoded_variants": 1,
+      "decoded_sizes": [
+        228264
+      ],
+      "stored_sizes": [
+        218764
+      ],
+      "matches_current_tool_limit": false,
+      "exceeds_current_tool_limit": false
+    }
+  ],
+  "records": [
+    {
+      "slot": 1,
+      "name": "audio/loadscreen/1.raw",
+      "index": 1610,
+      "data_offset": 3713024,
+      "decoded_bytes": 256204,
+      "stored_bytes": 248120,
+      "compressed": true,
+      "decoded_sha256": "0cc7b3271591ecf6c3076f81c981c33018e5886e0a919ccf65976356bdf1fea9",
+      "first_32_bytes_hex": "ea028407d3077609ba09470a0e0be70c0f0ff2105112cd13db1442152b15d815",
+      "header_type": "No RIFF/WAVE header; original PCM parameters not established from filename/size alone",
+      "wave_info": null,
+      "equivalent_seconds_at_current_converter_format": 5.337583333333333
+    },
+    {
+      "slot": 1,
+      "name": "audio/loadscreen/1.raw",
+      "index": 1611,
+      "data_offset": 736116736,
+      "decoded_bytes": 256204,
+      "stored_bytes": 248120,
+      "compressed": true,
+      "decoded_sha256": "0cc7b3271591ecf6c3076f81c981c33018e5886e0a919ccf65976356bdf1fea9",
+      "first_32_bytes_hex": "ea028407d3077609ba09470a0e0be70c0f0ff2105112cd13db1442152b15d815",
+      "header_type": "No RIFF/WAVE header; original PCM parameters not established from filename/size alone",
+      "wave_info": null,
+      "equivalent_seconds_at_current_converter_format": 5.337583333333333
+    },
+    {
+      "slot": 10,
+      "name": "audio/loadscreen/10.raw",
+      "index": 1612,
+      "data_offset": 5681152,
+      "decoded_bytes": 237986,
+      "stored_bytes": 229164,
+      "compressed": true,
+      "decoded_sha256": "a9da06e3d95f1c11c76d97c0c6f3f47c3452715bf23b3aeb3697aa5f74f1d27e",
+      "first_32_bytes_hex": "5e00a003260844095612bd18b8127b164b14a609440720015306c1047cf39003",
+      "header_type": "No RIFF/WAVE header; original PCM parameters not established from filename/size alone",
+      "wave_info": null,
+      "equivalent_seconds_at_current_converter_format": 4.9580416666666665
+    },
+    {
+      "slot": 10,
+      "name": "audio/loadscreen/10.raw",
+      "index": 1613,
+      "data_offset": 737290240,
+      "decoded_bytes": 237986,
+      "stored_bytes": 229164,
+      "compressed": true,
+      "decoded_sha256": "a9da06e3d95f1c11c76d97c0c6f3f47c3452715bf23b3aeb3697aa5f74f1d27e",
+      "first_32_bytes_hex": "5e00a003260844095612bd18b8127b164b14a609440720015306c1047cf39003",
+      "header_type": "No RIFF/WAVE header; original PCM parameters not established from filename/size alone",
+      "wave_info": null,
+      "equivalent_seconds_at_current_converter_format": 4.9580416666666665
+    },
+    {
+      "slot": 11,
+      "name": "audio/loadscreen/11.raw",
+      "index": 1614,
+      "data_offset": 5910528,
+      "decoded_bytes": 243734,
+      "stored_bytes": 239182,
+      "compressed": true,
+      "decoded_sha256": "bef504e295ee90bc820eeb004286bf14f238d0d4daa72bea9b7717e858f76927",
+      "first_32_bytes_hex": "5f016802850ed30cecf0e0f8361f57116fd037e09b2cda1ffc00ecf54eef190e",
+      "header_type": "No RIFF/WAVE header; original PCM parameters not established from filename/size alone",
+      "wave_info": null,
+      "equivalent_seconds_at_current_converter_format": 5.077791666666666
+    },
+    {
+      "slot": 12,
+      "name": "audio/loadscreen/12.raw",
+      "index": 1615,
+      "data_offset": 6150144,
+      "decoded_bytes": 236188,
+      "stored_bytes": 221955,
+      "compressed": true,
+      "decoded_sha256": "47475b7cf9b336d25489687c0f6f18671923d038bcfd74fccf2ae1774736cd63",
+      "first_32_bytes_hex": "2d04f313231eab25d02af52df530a2324534ca34ed321a303d2d512976251d23",
+      "header_type": "No RIFF/WAVE header; original PCM parameters not established from filename/size alone",
+      "wave_info": null,
+      "equivalent_seconds_at_current_converter_format": 4.920583333333333
+    },
+    {
+      "slot": 13,
+      "name": "audio/loadscreen/13.raw",
+      "index": 1616,
+      "data_offset": 6373376,
+      "decoded_bytes": 253224,
+      "stored_bytes": 230451,
+      "compressed": true,
+      "decoded_sha256": "276cd4bea7dddcfea12f8b80e17dfb597fc4f41a3fa4e512981c046bc3611012",
+      "first_32_bytes_hex": "e2ff95ff8aff6aff3eff24ff04ffb2fe37fe02fe06fee7fda8fd84fd45fdeafc",
+      "header_type": "No RIFF/WAVE header; original PCM parameters not established from filename/size alone",
+      "wave_info": null,
+      "equivalent_seconds_at_current_converter_format": 5.2755
+    },
+    {
+      "slot": 14,
+      "name": "audio/loadscreen/14.raw",
+      "index": 1617,
+      "data_offset": 6604800,
+      "decoded_bytes": 169302,
+      "stored_bytes": 163107,
+      "compressed": true,
+      "decoded_sha256": "0ae2305b8b79742df8697f079e9f52208c0e5a84ba9ce0af134a1915108cb619",
+      "first_32_bytes_hex": "7e009a095711cd1a53269d403b50534987560e5eab623269ce6b296f66798179",
+      "header_type": "No RIFF/WAVE header; original PCM parameters not established from filename/size alone",
+      "wave_info": null,
+      "equivalent_seconds_at_current_converter_format": 3.527125
+    },
+    {
+      "slot": 15,
+      "name": "audio/loadscreen/15.raw",
+      "index": 1618,
+      "data_offset": 6768640,
+      "decoded_bytes": 230344,
+      "stored_bytes": 219837,
+      "compressed": true,
+      "decoded_sha256": "e0752239e705acd86dea03e3fea5f95ed2a0a09d19fe6cdd5ec4fadfcf2e6c57",
+      "first_32_bytes_hex": "0c0173f2ecdeadda8cecea03311af643e75520573b56f42fff0484f7dbe067d0",
+      "header_type": "No RIFF/WAVE header; original PCM parameters not established from filename/size alone",
+      "wave_info": null,
+      "equivalent_seconds_at_current_converter_format": 4.7988333333333335
+    },
+    {
+      "slot": 16,
+      "name": "audio/loadscreen/16.raw",
+      "index": 1619,
+      "data_offset": 6989824,
+      "decoded_bytes": 261544,
+      "stored_bytes": 248075,
+      "compressed": true,
+      "decoded_sha256": "bd64b13a4cfbf3e14154d08c6e0e63d830304ca3d33256c5b14d87bada64c897",
+      "first_32_bytes_hex": "edfead00defc5ffca5fa13f54bf95dfaaef675f573f8fef3b8f2e0f401f047f5",
+      "header_type": "No RIFF/WAVE header; original PCM parameters not established from filename/size alone",
+      "wave_info": null,
+      "equivalent_seconds_at_current_converter_format": 5.448833333333333
+    },
+    {
+      "slot": 16,
+      "name": "audio/loadscreen/16.raw",
+      "index": 1620,
+      "data_offset": 736829440,
+      "decoded_bytes": 261544,
+      "stored_bytes": 248075,
+      "compressed": true,
+      "decoded_sha256": "bd64b13a4cfbf3e14154d08c6e0e63d830304ca3d33256c5b14d87bada64c897",
+      "first_32_bytes_hex": "edfead00defc5ffca5fa13f54bf95dfaaef675f573f8fef3b8f2e0f401f047f5",
+      "header_type": "No RIFF/WAVE header; original PCM parameters not established from filename/size alone",
+      "wave_info": null,
+      "equivalent_seconds_at_current_converter_format": 5.448833333333333
+    },
+    {
+      "slot": 17,
+      "name": "audio/loadscreen/17.raw",
+      "index": 1621,
+      "data_offset": 7239680,
+      "decoded_bytes": 223708,
+      "stored_bytes": 210607,
+      "compressed": true,
+      "decoded_sha256": "d09f717f4de032f53a25179aa058fecd02032831d731338dad92df1f93b1e4bb",
+      "first_32_bytes_hex": "4a0a3332ee37e030e823fb16800badece7c989a88c95c98c3d87e48673893095",
+      "header_type": "No RIFF/WAVE header; original PCM parameters not established from filename/size alone",
+      "wave_info": null,
+      "equivalent_seconds_at_current_converter_format": 4.660583333333333
+    },
+    {
+      "slot": 17,
+      "name": "audio/loadscreen/17.raw",
+      "index": 1622,
+      "data_offset": 737079296,
+      "decoded_bytes": 223708,
+      "stored_bytes": 210607,
+      "compressed": true,
+      "decoded_sha256": "d09f717f4de032f53a25179aa058fecd02032831d731338dad92df1f93b1e4bb",
+      "first_32_bytes_hex": "4a0a3332ee37e030e823fb16800badece7c989a88c95c98c3d87e48673893095",
+      "header_type": "No RIFF/WAVE header; original PCM parameters not established from filename/size alone",
+      "wave_info": null,
+      "equivalent_seconds_at_current_converter_format": 4.660583333333333
+    },
+    {
+      "slot": 18,
+      "name": "audio/loadscreen/18.raw",
+      "index": 1623,
+      "data_offset": 7450624,
+      "decoded_bytes": 228264,
+      "stored_bytes": 218764,
+      "compressed": true,
+      "decoded_sha256": "62cc4b9d4e813fb8351bd2933f9be5086fc3a59eab6531402e086600be5eb36b",
+      "first_32_bytes_hex": "7dffa3fee4030e08df0ec81170142215bc16d016c712d9116814d5127119822f",
+      "header_type": "No RIFF/WAVE header; original PCM parameters not established from filename/size alone",
+      "wave_info": null,
+      "equivalent_seconds_at_current_converter_format": 4.7555
+    },
+    {
+      "slot": 18,
+      "name": "audio/loadscreen/18.raw",
+      "index": 1624,
+      "data_offset": 736366592,
+      "decoded_bytes": 228264,
+      "stored_bytes": 218764,
+      "compressed": true,
+      "decoded_sha256": "62cc4b9d4e813fb8351bd2933f9be5086fc3a59eab6531402e086600be5eb36b",
+      "first_32_bytes_hex": "7dffa3fee4030e08df0ec81170142215bc16d016c712d9116814d5127119822f",
+      "header_type": "No RIFF/WAVE header; original PCM parameters not established from filename/size alone",
+      "wave_info": null,
+      "equivalent_seconds_at_current_converter_format": 4.7555
+    },
+    {
+      "slot": 2,
+      "name": "audio/loadscreen/2.raw",
+      "index": 1625,
+      "data_offset": 1341440,
+      "decoded_bytes": 291904,
+      "stored_bytes": 284297,
+      "compressed": true,
+      "decoded_sha256": "4082c09cc62d27fd189919e5d73cbd3fe6dea59b8a03b7d645a2c1d0b7cde71a",
+      "first_32_bytes_hex": "57fdb7e73ce202d3adc747b6fea4f3a55493da90b38a7c8bb285138381854b84",
+      "header_type": "No RIFF/WAVE header; original PCM parameters not established from filename/size alone",
+      "wave_info": null,
+      "equivalent_seconds_at_current_converter_format": 6.081333333333333
+    },
+    {
+      "slot": 3,
+      "name": "audio/loadscreen/3.raw",
+      "index": 1626,
+      "data_offset": 3962880,
+      "decoded_bytes": 259118,
+      "stored_bytes": 253380,
+      "compressed": true,
+      "decoded_sha256": "70c6f7a5aa2dbdfe53b4e8aa32964f768ba588dd920327fff6a3b9cd8b0eb6b2",
+      "first_32_bytes_hex": "18ff6bfc47f211f6ccec17d9dac934d0e7e0c9deefe763ea68ee5fefe6ecbbec",
+      "header_type": "No RIFF/WAVE header; original PCM parameters not established from filename/size alone",
+      "wave_info": null,
+      "equivalent_seconds_at_current_converter_format": 5.398291666666666
+    },
+    {
+      "slot": 3,
+      "name": "audio/loadscreen/3.raw",
+      "index": 1627,
+      "data_offset": 626548736,
+      "decoded_bytes": 259118,
+      "stored_bytes": 253380,
+      "compressed": true,
+      "decoded_sha256": "70c6f7a5aa2dbdfe53b4e8aa32964f768ba588dd920327fff6a3b9cd8b0eb6b2",
+      "first_32_bytes_hex": "18ff6bfc47f211f6ccec17d9dac934d0e7e0c9deefe763ea68ee5fefe6ecbbec",
+      "header_type": "No RIFF/WAVE header; original PCM parameters not established from filename/size alone",
+      "wave_info": null,
+      "equivalent_seconds_at_current_converter_format": 5.398291666666666
+    },
+    {
+      "slot": 4,
+      "name": "audio/loadscreen/4.raw",
+      "index": 1628,
+      "data_offset": 4216832,
+      "decoded_bytes": 242452,
+      "stored_bytes": 232409,
+      "compressed": true,
+      "decoded_sha256": "d2f489ab91494daee5dde78749ab3027dd1fd60b71d0d3992e4318f5ca52638f",
+      "first_32_bytes_hex": "61ff3dfa51f6f3f375f124efb6ec63eaa6e80de7d4e56ae4bee306e3d2e260e2",
+      "header_type": "No RIFF/WAVE header; original PCM parameters not established from filename/size alone",
+      "wave_info": null,
+      "equivalent_seconds_at_current_converter_format": 5.051083333333334
+    },
+    {
+      "slot": 4,
+      "name": "audio/loadscreen/4.raw",
+      "index": 1629,
+      "data_offset": 1317601280,
+      "decoded_bytes": 242452,
+      "stored_bytes": 232409,
+      "compressed": true,
+      "decoded_sha256": "d2f489ab91494daee5dde78749ab3027dd1fd60b71d0d3992e4318f5ca52638f",
+      "first_32_bytes_hex": "61ff3dfa51f6f3f375f124efb6ec63eaa6e80de7d4e56ae4bee306e3d2e260e2",
+      "header_type": "No RIFF/WAVE header; original PCM parameters not established from filename/size alone",
+      "wave_info": null,
+      "equivalent_seconds_at_current_converter_format": 5.051083333333334
+    },
+    {
+      "slot": 5,
+      "name": "audio/loadscreen/5.raw",
+      "index": 1630,
+      "data_offset": 4450304,
+      "decoded_bytes": 270812,
+      "stored_bytes": 262403,
+      "compressed": true,
+      "decoded_sha256": "708b32827b39bd7c8cef0f80f3412c1e889e0a49055d5db82733f321cd349d7f",
+      "first_32_bytes_hex": "0ff893f874e04bdf54ca8af1be1812184748ad32402c773f99368133384433e9",
+      "header_type": "No RIFF/WAVE header; original PCM parameters not established from filename/size alone",
+      "wave_info": null,
+      "equivalent_seconds_at_current_converter_format": 5.641916666666667
+    },
+    {
+      "slot": 6,
+      "name": "audio/loadscreen/6.raw",
+      "index": 1631,
+      "data_offset": 4714496,
+      "decoded_bytes": 244270,
+      "stored_bytes": 240400,
+      "compressed": true,
+      "decoded_sha256": "e781c942b82bff77b3cf776a8baa9c44ed916f0663493dd8bf7bb9890df2d973",
+      "first_32_bytes_hex": "31042f0a68e6c5e230e554e6e2e892e78ae89ce688e8d7e85ce9b4e506e57be3",
+      "header_type": "No RIFF/WAVE header; original PCM parameters not established from filename/size alone",
+      "wave_info": null,
+      "equivalent_seconds_at_current_converter_format": 5.088958333333333
+    },
+    {
+      "slot": 6,
+      "name": "audio/loadscreen/6.raw",
+      "index": 1632,
+      "data_offset": 736587776,
+      "decoded_bytes": 244270,
+      "stored_bytes": 240400,
+      "compressed": true,
+      "decoded_sha256": "e781c942b82bff77b3cf776a8baa9c44ed916f0663493dd8bf7bb9890df2d973",
+      "first_32_bytes_hex": "31042f0a68e6c5e230e554e6e2e892e78ae89ce688e8d7e85ce9b4e506e57be3",
+      "header_type": "No RIFF/WAVE header; original PCM parameters not established from filename/size alone",
+      "wave_info": null,
+      "equivalent_seconds_at_current_converter_format": 5.088958333333333
+    },
+    {
+      "slot": 7,
+      "name": "audio/loadscreen/7.raw",
+      "index": 1633,
+      "data_offset": 4956160,
+      "decoded_bytes": 247890,
+      "stored_bytes": 231534,
+      "compressed": true,
+      "decoded_sha256": "65a83ff7459b6b0e43071e425dc7749f745681eab1dbfaab8af4acc7f656bf7c",
+      "first_32_bytes_hex": "5300d600b001da031f05e90610062a0576061407d506c90502070f083406bb06",
+      "header_type": "No RIFF/WAVE header; original PCM parameters not established from filename/size alone",
+      "wave_info": null,
+      "equivalent_seconds_at_current_converter_format": 5.164375
+    },
+    {
+      "slot": 8,
+      "name": "audio/loadscreen/8.raw",
+      "index": 1634,
+      "data_offset": 5189632,
+      "decoded_bytes": 252876,
+      "stored_bytes": 247635,
+      "compressed": true,
+      "decoded_sha256": "a3f8f65eccd0263ff14d638473849e9ad0ff8189d58a82c057193b64800440d4",
+      "first_32_bytes_hex": "b9ff53012506be12ed199326ae27fd2d5b2a2a2c6328152921380632732ffd20",
+      "header_type": "No RIFF/WAVE header; original PCM parameters not established from filename/size alone",
+      "wave_info": null,
+      "equivalent_seconds_at_current_converter_format": 5.26825
+    },
+    {
+      "slot": 9,
+      "name": "audio/loadscreen/9.raw",
+      "index": 1635,
+      "data_offset": 5437440,
+      "decoded_bytes": 255304,
+      "stored_bytes": 242784,
+      "compressed": true,
+      "decoded_sha256": "686fbd5d43254df80942b731a7305330ca205133a6d73b0b358e9442d3d9c958",
+      "first_32_bytes_hex": "f9ffe7ff08ff2bfca6f606f077e9d2e3dddf4cdebfdfe7e1ace312e6c6e895e9",
+      "header_type": "No RIFF/WAVE header; original PCM parameters not established from filename/size alone",
+      "wave_info": null,
+      "equivalent_seconds_at_current_converter_format": 5.318833333333333
+    }
+  ],
+  "interpretation": "Original sizes characterize shipped assets, not maximum engine allocation. Any duration based only on 48,000 bytes/s is a current-converter-format equivalent, not verified original playback duration."
+}
