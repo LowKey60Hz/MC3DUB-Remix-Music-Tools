@@ -45,7 +45,7 @@ class DashboardTests(unittest.TestCase):
         folder = self.root/'STREAMS/Music/Win_Lose'
         folder.mkdir()
         for name in ('win1','win2','loose1'):
-            (folder/(name+'.rsm')).write_bytes(b'fixture')
+            (folder/(name+'.rsm')).write_bytes(('fixture-'+name).encode())
 
     def tearDown(self):
         self.window.close()
@@ -71,21 +71,106 @@ class DashboardTests(unittest.TestCase):
         self.assertEqual(self.window.dashboard_race_counts['Win'].text(),'2')
         self.assertEqual(self.window.dashboard_race_counts['Lose'].text(),'1')
 
-    def test_race_disagreement_and_missing_audio_are_unknown(self):
+    def test_current_list_and_dashboard_collapse_repeated_references(self):
+        self.window.race_refresh_current()
+        self.assertEqual(self.window.race_current_tables['Win'].rowCount(), 2)
+        self.assertEqual(self.window.dashboard_race_counts['Win'].text(), '2')
+
+    def test_legacy_duplicate_rsm_is_one_soundtrack_and_refresh_detects_changes(self):
+        folder = self.root/'STREAMS/Music/Win_Lose'
+        (folder/'win3.rsm').write_bytes((folder/'win2.rsm').read_bytes())
+        playlists = list((self.root/'ASSETS/tune/audio/playlist/city').rglob('*_raceover_music.play'))
+        for path in playlists:
+            path.write_text('num_songs: 3\nmusic\\Win_Lose\\win1\nmusic\\Win_Lose\\win2\nmusic\\Win_Lose\\win3\n')
+        before = {p: p.read_bytes() for p in playlists}
+        self.window.race_refresh_current()
+        self.assertEqual(self.window.race_current_tables['Win'].rowCount(), 2)
+        self.assertEqual(self.window.dashboard_race_counts['Win'].text(), '2')
+        self.assertEqual({p: p.read_bytes() for p in playlists}, before)
+        (folder/'win3.rsm').write_bytes(b'a different third soundtrack')
+        self.window.race_refresh_current()
+        self.assertEqual(self.window.race_current_tables['Win'].rowCount(), 3)
+        self.assertEqual(self.window.dashboard_race_counts['Win'].text(), '3')
+
+    def test_missing_playlist_reference_is_not_an_installed_song(self):
+        for path in (self.root/'ASSETS/tune/audio/playlist/city').rglob('*_raceover_music.play'):
+            path.write_text('num_songs: 3\nmusic\\Win_Lose\\win1\nmusic\\Win_Lose\\win2\nmusic\\Win_Lose\\win3\n')
+        self.window.race_refresh_current()
+        table = self.window.race_current_tables['Win']
+        self.assertEqual(table.rowCount(), 2)
+        self.assertEqual(self.window.dashboard_race_counts['Win'].text(), '2')
+
+    def test_playlist_disagreement_does_not_change_installed_inventory(self):
         playlist=self.root/'ASSETS/tune/audio/playlist/city/tokyo/music/tokyo_raceover_music.play'
         playlist.write_text('num_songs: 1\nmusic\\Win_Lose\\win1\n')
         (self.root/'STREAMS/Music/Win_Lose/loose1.rsm').unlink()
         self.window.update_dashboard_metrics()
-        self.assertEqual(self.window.dashboard_race_counts['Win'].text(),'—')
-        self.assertIn('differ',self.window.dashboard_race_counts['Win'].toolTip())
-        self.assertEqual(self.window.dashboard_race_counts['Lose'].text(),'—')
-        self.assertIn('missing',self.window.dashboard_race_counts['Lose'].toolTip())
+        self.assertEqual(self.window.dashboard_race_counts['Win'].text(),'2')
+        self.assertEqual(self.window.dashboard_race_counts['Lose'].text(),'0')
 
-    def test_empty_race_playlist_is_zero(self):
+    def test_zero_inventory_is_independent_of_playlist_count(self):
         for path in (self.root/'ASSETS/tune/audio/playlist/city').rglob('*_raceover_lose_music.play'):
             path.write_text('num_songs: 0\n')
         self.window.update_dashboard_metrics()
+        self.assertEqual(self.window.dashboard_race_counts['Lose'].text(),'1')
+        (self.root/'STREAMS/Music/Win_Lose/loose1.rsm').unlink()
+        self.window.update_dashboard_metrics()
         self.assertEqual(self.window.dashboard_race_counts['Lose'].text(),'0')
+
+    def test_inventory_includes_unreferenced_audio_without_playlists(self):
+        folder = self.root/'STREAMS/Music/Win_Lose'
+        (folder/'win10.rsm').write_bytes(b'another installed win')
+        (folder/'loose3.rsm').write_bytes(b'another installed lose')
+        (folder/'MC3_EmptyGenrePlaceholder.rsm').write_bytes(b'placeholder')
+        (folder/'win_backup.rsm').write_bytes(b'backup')
+        for path in (self.root/'ASSETS/tune/audio/playlist/city').rglob('*_raceover*music.play'):
+            path.unlink()
+        self.window.race_refresh_current()
+        self.assertEqual(self.window.dashboard_race_counts['Win'].text(), '3')
+        self.assertEqual(self.window.dashboard_race_counts['Lose'].text(), '2')
+        table = self.window.race_current_tables['Win']
+        self.assertEqual([table.item(i, 0).text() for i in range(table.rowCount())],
+                         ['win1.rsm', 'win2.rsm', 'win10.rsm'])
+
+    def test_missing_installed_folder_is_unavailable_not_zero(self):
+        folder = self.root/'STREAMS/Music/Win_Lose'
+        for path in folder.iterdir():
+            path.unlink()
+        folder.rmdir()
+        self.window.update_dashboard_metrics()
+        self.assertIn('missing', self.window.dashboard_race_counts['Win'].toolTip())
+        self.assertIn('missing', self.window.dashboard_race_counts['Lose'].toolTip())
+
+    def test_current_removal_passes_only_selected_installed_files(self):
+        script = self.root/'supporting_tools/remove_race_soundtracks.py'
+        script.parent.mkdir()
+        script.touch()
+        self.window.race_refresh_current()
+        table = self.window.race_current_tables['Win']
+        table.selectRow(1)
+        with patch.object(gui.QMessageBox, 'question', return_value=gui.QMessageBox.Yes), \
+                patch.object(gui, 'QProcess') as process:
+            self.window.race_remove_current('Win')
+            args = process.return_value.setArguments.call_args.args[0]
+            selected = args[args.index('--selected')+1:args.index('--apply')]
+            self.assertEqual(selected, ['win2.rsm'])
+            process.return_value.start.assert_called_once()
+            self.assertTrue(self.window.race_busy)
+            self.assertTrue(all(not b.isEnabled() for b in self.window.race_current_remove_buttons))
+        self.window.race_busy = False
+        self.window.race_process = None
+
+    def test_current_removal_cancel_does_not_start_a_process(self):
+        script = self.root/'supporting_tools/remove_race_soundtracks.py'
+        script.parent.mkdir()
+        script.touch()
+        self.window.race_refresh_current()
+        self.window.race_current_tables['Win'].selectRow(0)
+        with patch.object(gui.QMessageBox, 'question', return_value=gui.QMessageBox.No), \
+                patch.object(gui, 'QProcess') as process:
+            self.window.race_remove_current('Win')
+            process.assert_not_called()
+        self.assertFalse(self.window.race_busy)
 
     def test_unverified_workspace_hides_old_numbers_and_theme(self):
         self.window.update_dashboard_metrics()

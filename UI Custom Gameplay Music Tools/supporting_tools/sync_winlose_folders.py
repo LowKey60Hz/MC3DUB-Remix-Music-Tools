@@ -8,6 +8,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from remove_race_soundtracks import PLACEHOLDERS, slot_entries
 
 CONFIG = {
     'Win': ('2_Win', 'win', '*_raceover_music.play'),
@@ -32,10 +33,9 @@ def playlist_data(path, prefix):
     if len(entries) != int(lines[0].split(':', 1)[1]):
         raise ValueError(f'Playlist count mismatch: {path}')
     expected = re.compile(r'music\\Win_Lose\\' + prefix + r'\d+', re.I)
-    if any(not expected.fullmatch(x) for x in entries):
+    placeholder = PLACEHOLDERS['Win' if prefix == 'win' else 'Lose']
+    if any(not expected.fullmatch(x) and x.casefold() != placeholder.casefold() for x in entries):
         raise ValueError(f'Unexpected playlist entry: {path}')
-    if len({x.casefold() for x in entries}) != len(entries):
-        raise ValueError(f'Duplicate playlist entry: {path}')
     return raw, entries
 
 
@@ -80,7 +80,19 @@ def main():
         entries = next(iter(data.values()))[1]
         if any(item[1] != entries for item in data.values()):
             return fail(f'{kind} playlists are not synchronized; no changes made.')
-        groups[kind] = {'songs': songs, 'prefix': prefix, 'data': data, 'entries': entries}
+        real = []
+        seen_audio = set()
+        for entry in entries:
+            if entry.casefold() == PLACEHOLDERS[kind].casefold():
+                continue
+            installed = music/(entry.rsplit('\\', 1)[-1]+'.rsm')
+            if not installed.is_file():
+                return fail('Referenced race audio is missing: '+str(installed))
+            identity = hashlib.sha256(installed.read_bytes()).digest()
+            if identity not in seen_audio:
+                real.append(entry)
+                seen_audio.add(identity)
+        groups[kind] = {'songs': songs, 'prefix': prefix, 'data': data, 'entries': real}
     if not groups:
         print('[INFO] Both folders empty. No changes made.')
         return 0
@@ -101,15 +113,10 @@ def main():
         info['existing'] = existing
         if mode == 'replace':
             numbers = list(range(1, len(info['songs']) + 1))
-            if kind == 'Lose' and len(numbers) == 2:
+            if len(numbers) == 2:
                 numbers = [1, 3]
             plan = [(song, f'{prefix}{n}', None) for song, n in zip(info['songs'], numbers)]
-            # Two-Win workaround: retain win1/win2 and duplicate song 2 as win3.
-            # Three or more Win songs retain their normal incremental numbering.
-            if kind == 'Win' and len(info['songs']) == 2:
-                plan.append((info['songs'][1], 'win3', None))
-                print('[WIN PATCH] Two Win songs: win3 duplicates win2 for game playback.')
-            info['entries_new'] = [f'music\\Win_Lose\\{stem}' for _, stem, _ in plan]
+            info['entries_new'] = slot_entries(kind, [stem for _, stem, _ in plan])
         else:
             used = {p.stem.casefold() for p in existing}
             used.update(x.rsplit('\\', 1)[-1].casefold() for x in info['entries'])
@@ -124,16 +131,15 @@ def main():
                 i = 1
                 while f'{prefix}{i}' in used:
                     i += 1
+                if kind == 'Win' and len(info['entries']) == 1 and len(info['songs']) == 1 and i == 2:
+                    i = 3
+                    while f'{prefix}{i}' in used:
+                        i += 1
                 stem = f'{prefix}{i}'
                 used.add(stem)
                 plan.append((song, stem, digest))
             info['entries_new'] = info['entries'] + [f'music\\Win_Lose\\{stem}' for _, stem, _ in plan]
-            if kind == 'Win' and len(info['entries_new']) == 2 and len(plan) == 1:
-                # Preserve win2 and add a copy as win3 for the two-song case.
-                if plan[0][1] == 'win2' and 'win3' not in used:
-                    plan.append((plan[0][0], 'win3', None))
-                    info['entries_new'].append('music\\Win_Lose\\win3')
-                    print('[WIN PATCH] Two Win songs: win3 duplicates win2 for game playback.')
+            info['entries_new'] = slot_entries(kind, [entry.rsplit('\\', 1)[-1] for entry in info['entries_new']])
         staged_plan[kind] = plan
         print(f'[{kind.upper()}] {len(info["songs"])} source file(s), {len(plan)} to convert ({mode}).')
         for song, stem, _ in plan:

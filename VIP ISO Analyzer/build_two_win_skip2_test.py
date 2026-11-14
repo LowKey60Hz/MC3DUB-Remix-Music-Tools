@@ -52,25 +52,32 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--test-dir',type=Path,default=TEST,help='New isolated output folder; existing completed tests are never overwritten')
     parser.add_argument('--resume',action='store_true',help='Resume interrupted preparation before compilation only')
+    parser.add_argument('--source-workspace',type=Path,default=PROJECT,help='Read-only extracted Retail source, separate from the tools project')
     args=parser.parse_args()
     TEST=args.test_dir.resolve()
+    source_workspace=args.source_workspace.resolve(strict=True)
     # Output must not be in any active workspace directory.
     if TEST==PROJECT.resolve() or TEST.is_relative_to(PROJECT.resolve()):
         raise ValueError('Test output must be outside the active tools project')
+    if (TEST==source_workspace or TEST.is_relative_to(source_workspace)
+            or source_workspace.is_relative_to(TEST)):
+        raise ValueError('Test output and source workspace must not overlap')
+    if any(not (source_workspace/name).is_dir() for name in ('ASSETS','STREAMS','ISO_FILES')):
+        raise ValueError('Source workspace needs ASSETS, STREAMS and ISO_FILES')
     resume=args.resume
     if TEST.exists() and not resume:
         raise FileExistsError('Refusing to overwrite existing test workspace')
     if resume and (not (TEST/'active_before.json').is_file() or (TEST/'result.json').exists()
                    or (TEST/'ISO_FILES').exists()):
         raise ValueError('Resume is restricted to an interrupted preparation before compilation')
-    if (PROJECT/'ISO_FILES/MC3_PROFILE.txt').read_text().strip()!='retail':
+    if (source_workspace/'ISO_FILES/MC3_PROFILE.txt').read_text().strip()!='retail':
         raise ValueError('This isolated test is Retail only')
-    source=Path((PROJECT/'ISO_FILES/MC3_SOURCE_ISO.txt').read_text().strip())
+    source=Path((source_workspace/'ISO_FILES/MC3_SOURCE_ISO.txt').read_text().strip())
     songs=sorted((p for p in (PROJECT/'Custom Music/2_Win').iterdir()
                   if p.is_file() and p.suffix.lower() in ('.mp3','.wav')),key=lambda p:(p.name.casefold(),p.name))[:2]
     if len(songs)!=2 or digest(songs[0])==digest(songs[1]):
         raise ValueError('Need two distinct staged Win sources')
-    total=sum(p.stat().st_size for name in ('ASSETS','STREAMS') for p in (PROJECT/name).rglob('*') if p.is_file())
+    total=sum(p.stat().st_size for name in ('ASSETS','STREAMS') for p in (source_workspace/name).rglob('*') if p.is_file())
     needed = source.stat().st_size + (total if resume else 2*total) + 512*1024*1024
     if shutil.disk_usage(ROOT).free < needed:
         raise ValueError('Not enough free space for isolated sources, compiled archives and one ISO')
@@ -78,16 +85,17 @@ def main():
         TEST.mkdir()
     log=TEST/'build.log'
     production_engine_hash=digest(TOOLS/'sync_winlose_folders.py')
+    active_before=snapshot(PROJECT)
     if resume:
         before=json.loads((TEST/'active_before.json').read_text())
         print('Resuming isolated preparation; final checks will verify all unchanged files.',flush=True)
     else:
         print('Recording active workspace hashes...',flush=True)
-        before=snapshot(PROJECT)
+        before=snapshot(source_workspace)
         (TEST/'active_before.json').write_text(json.dumps(before,indent=2))
         print('Copying ASSETS and STREAMS into isolated workspace...',flush=True)
         for folder in ('ASSETS','STREAMS'):
-            shutil.copytree(PROJECT/folder,TEST/folder)
+            shutil.copytree(source_workspace/folder,TEST/folder)
         if snapshot(TEST)!=before:
             raise ValueError('Isolated copy differs from active snapshot')
     isolated_tools=TEST/'supporting_tools'
@@ -118,7 +126,7 @@ def main():
         content=newline.join(['num_songs: 2',r'music\Win_Lose\win1',r'music\Win_Lose\win3'])+newline
         path.write_bytes((b'\xef\xbb\xbf' if raw.startswith(b'\xef\xbb\xbf') else b'')+content.encode())
     assert read_race_tracks(TEST,'Win')==[r'music\Win_Lose\win1',r'music\Win_Lose\win3']
-    assert read_race_tracks(TEST,'Lose')==read_race_tracks(PROJECT,'Lose')
+    assert read_race_tracks(TEST,'Lose')==read_race_tracks(source_workspace,'Lose')
     after=snapshot(TEST)
     allowed={p.relative_to(TEST).as_posix() for p in playlists}
     for name in set(before)|set(after):
@@ -126,7 +134,7 @@ def main():
         if before.get(name)!=after.get(name) and name not in allowed and not is_win:
             raise ValueError('Unexpected isolated workspace change: '+name)
     workspace=TEST/'ISO_FILES'; workspace.mkdir()
-    for path in (PROJECT/'ISO_FILES').glob('MC3_*.txt'):
+    for path in (source_workspace/'ISO_FILES').glob('MC3_*.txt'):
         shutil.copy2(path,workspace/path.name)
     run([sys.executable,'-u',str(TOOLS/'dave.py'),'B','-ca','-cn','-cf','-fc','1',str(TEST/'ASSETS'),str(workspace/'ASSETS.DAT')],log)
     run([sys.executable,'-u',str(TOOLS/'hash_build.py'),'B',str(TEST/'STREAMS'),str(workspace/'STREAMS.DAT'),'-a','MClub'],log)
@@ -144,12 +152,14 @@ def main():
     output=TEST/'MC3_Retail_Two_Win_1_and_3.iso'
     run([sys.executable,'-u',str(TOOLS/'MC3_ISO_Builder_Retail.py'),'--profile','retail','--relocate-archives','--source',str(source),'--replacement-dir',str(workspace),'--manifest',str(workspace/'STREAMS.LST'),'--output',str(output),'--yes'],log)
     print('Confirming active workspace and production engine remain unchanged...',flush=True)
-    assert snapshot(PROJECT)==before
+    assert snapshot(source_workspace)==before
+    assert snapshot(PROJECT)==active_before
     assert digest(TOOLS/'sync_winlose_folders.py')==production_engine_hash
     result=dict(iso=str(output),iso_sha256=digest(output),mapping=mapping,win_playlist_count=24,
                 playlist_entries=[r'music\Win_Lose\win1',r'music\Win_Lose\win3'],num_songs=2,
                 win2_present=False,lose_and_other_assets_unchanged=True,active_workspace_unchanged=True,
                 production_engine_unchanged=True,compiled_archives_verified=True,runtime_status='NOT TESTED')
+    result.update(source_workspace=str(source_workspace),source_workspace_unchanged=True)
     (TEST/'result.json').write_text(json.dumps(result,indent=2)+'\n')
     print(json.dumps(result,indent=2),flush=True)
 

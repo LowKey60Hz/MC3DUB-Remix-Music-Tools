@@ -1,5 +1,25 @@
 # Continuing the two-Win-song investigation
 
+## Latest user runtime confirmations
+
+Following the authorized implementation update, user confirmed both-song playback and correct UI listing in a two-song ISO. User then confirmed a no-song Win/Lose ISO runs normally, with silence after both wins and losses. Empty-category runtime behavior is therefore user-confirmed for that test. Exact new image identities were not supplied; preserve historical per-image provenance. One-song Win/Lose runtime cases remain unreported. See ../WIN_LOSE_REMOVAL_UPDATE.md and RUNTIME_RESULTS.md. Earlier pending-empty statements below are historical.
+
+## Subsequent authorized UI/removal update
+
+The user subsequently requested the production UI/removal update. See ../WIN_LOSE_REMOVAL_UPDATE.md for implementation and verification: folder-based distinct-song inventory, selected current-song removal, two-RSM A,B,B Win playlists, and nonempty metadata placeholders for zero songs. The one-song and empty Win/Lose runtime cases remain pending. Historical statements below that production was unchanged describe the experiments at the time; the requested removal/Add/Replace integration has since been implemented. Existing research images/reports are preserved.
+
+## Current runtime finding: ABA versus ABB
+
+User reports five tests rather than the suggested ten: ABA played only Know Good at race transitions and after wins; ABB played both Know Good and Kendrick at both event types. Exact count allocation and cold-boot details were not separately specified. A = Know Good/win1, B = Kendrick/win3. ABB is now a user-observed candidate for two-song variety in this Retail comparison. A universal fixed-position selector does not explain both songs in ABB, and the exact engine algorithm remains unknown. Production remains unchanged; do not silently integrate this finding. See RUNTIME_RESULTS.md and ../Two_Win_Run_02_ThreeEntry/comparison_results.json. Older pending-runtime statements below are historical.
+
+## Latest continuation (2026-11-14)
+
+Update: the isolated ABA/ABB three-entry comparison is now built and automatically verified in ../Two_Win_Run_02_ThreeEntry. Runtime remains untested. A = Know Good/win1, B = Kendrick/win3. Per-image reports and TEST_INSTRUCTIONS.md describe the precise changes and test procedure. Production code is still unchanged. Earlier statements below calling the three-entry comparison unbuilt are historical.
+
+The local baseline, swapped control, and reversed-playlist images have been rebuilt and verified. The original MP3 and encoded RSM hashes match the historical inputs. See RUNTIME_RESULTS.md for the new user observations: swapped control plays only Kendrick (win3, second entry); reversed playlists play only Know Good (win1, second entry), both on race entry and race wins. This supports selection following playlist position in the observed events and demonstrates win1 playback when second. It does not establish the selector algorithm or validate two-song variety. Counts and cold-boot/save-state details remain unspecified. Production remains unchanged. The proposed three-entry duplicate-reference comparison is not built yet.
+
+The sections below describe the earlier handoff state; their 'not yet built' playlist-reversal statements are historical.
+
 ## Current conclusion
 
 No production slot-assignment fix has been applied. The shared `supporting_tools/sync_winlose_folders.py` still contains its earlier win2/win3 duplication behavior. The experiment has not validated skipping win2 as a two-song solution. Do not silently replace the production flow based on the hypothesis alone.

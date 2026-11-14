@@ -13,7 +13,7 @@ import uuid
 from workspace_cleanup import cleanup_plan
 from PySide6.QtCore import Qt, QProcess, QUrl
 from frontend_playlist import resolve_frontend_rsm, FrontendPlaylistError
-from race_playlist import read_race_tracks
+from race_playlist import read_display_race_tracks
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QHBoxLayout, QVBoxLayout,
     QLabel, QPushButton, QFrame, QStackedWidget, QTextEdit, QFileDialog, QMessageBox,
@@ -537,7 +537,7 @@ class Window(QMainWindow):
             label.setToolTip('')
             if self.profile_verified:
                 try:
-                    tracks = read_race_tracks(self.root, kind)
+                    tracks = read_display_race_tracks(self.root, kind)
                     unique = {track.casefold(): track for track in tracks}
                     folder = self.root/'STREAMS/Music/Win_Lose'
                     missing = [track for track in unique.values()
@@ -2064,6 +2064,7 @@ class Window(QMainWindow):
         columns = QHBoxLayout(); columns.setSpacing(12)
         self.race_tables = {}
         self.race_current_tables = {}
+        self.race_current_remove_buttons = []
 
         current_card, current_layout = self.panel('Current Soundtracks')
         staged_card, staged_layout = self.panel('Staged Soundtracks')
@@ -2077,13 +2078,16 @@ class Window(QMainWindow):
             current.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
             current.setEditTriggers(QAbstractItemView.NoEditTriggers)
             current.setSelectionBehavior(QAbstractItemView.SelectRows)
-            current.setSelectionMode(QAbstractItemView.SingleSelection)
+            current.setSelectionMode(QAbstractItemView.ExtendedSelection)
             apply_soundtrack_selection_theme(current)
             current.itemSelectionChanged.connect(lambda k=kind: self.race_preview_selection_changed(k))
             current.setMinimumHeight(145)
-            current.setToolTip('Read-only tracks referenced by the extracted race-over playlists.')
             current_layout.addWidget(current, 1)
             self.race_current_tables[kind] = current
+            remove_current = QPushButton('Remove Selected '+kind+' Soundtrack(s)')
+            remove_current.clicked.connect(lambda _, k=kind: self.race_remove_current(k))
+            current_layout.addWidget(remove_current)
+            self.race_current_remove_buttons.append(remove_current)
             staged_label = QLabel(f'Staged {kind}/Race Transition Tracks' if kind == 'Win' else f'Staged {kind} Tracks')
             staged_label.setStyleSheet('font-weight: 600; color: #eceef2;')
             staged_layout.addWidget(staged_label)
@@ -2093,7 +2097,6 @@ class Window(QMainWindow):
             table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
             table.setSelectionBehavior(QAbstractItemView.SelectRows)
             table.setMinimumHeight(112)
-            table.setToolTip(f'Drag MP3/WAV files from File Explorer here to stage {kind} tracks.')
             staged_layout.addWidget(table, 1)
             self.race_tables[kind] = table
             # Each category owns its add/remove actions.  Refreshing still
@@ -2167,14 +2170,15 @@ class Window(QMainWindow):
         # Refresh the lists silently; retain processing status/errors when present.
 
     def race_refresh_current(self):
-        """Read installed Win/Lose tracks from the same playlists used by the engine."""
+        """Show distinct installed Win/Lose files, independently of playlists."""
         self.race_preview_stop()
         for kind, table in self.race_current_tables.items():
             table.setRowCount(0)
+            table.setToolTip('')
             message = None
             entries = []
             try:
-                entries = read_race_tracks(self.root, kind)
+                entries = read_display_race_tracks(self.root, kind)
             except (OSError, UnicodeError, ValueError) as exc:
                 message = str(exc)
             if message:
@@ -2192,7 +2196,6 @@ class Window(QMainWindow):
                 # A playable RSM must be selectable for the shared preview controls.
                 # Keep missing files visible but disabled for playback.
                 item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
-                item.setToolTip(entry)
                 if file.is_file():
                     item.setData(Qt.UserRole, str(file))
                 table.setItem(table.rowCount() - 1, 0, item)
@@ -2383,7 +2386,8 @@ class Window(QMainWindow):
         self.race_refresh()
 
     def race_apply(self, mode):
-        if self.race_busy or self.build_busy or self.extraction_busy or self.soundtrack_busy: return
+        if any((self.race_busy, self.build_busy, self.extraction_busy, self.soundtrack_busy,
+                self.custom_busy, self.title_busy, self.loading_busy)): return
         if not self.profile_verified:
             QMessageBox.warning(self,'Profile not verified','Wait for automatic SHA-256 verification.'); return
         script=self.root/'supporting_tools'/'sync_winlose_folders.py'
@@ -2400,7 +2404,7 @@ class Window(QMainWindow):
             QMessageBox.Yes|QMessageBox.No,QMessageBox.No) != QMessageBox.Yes: return
         self.race_busy=True; self.race_prompt_answered=False; self.race_prompt_tail=''
         self.race_active_mode = mode
-        for button in self.race_buttons: button.setEnabled(False)
+        for button in self.race_buttons + self.race_current_remove_buttons: button.setEnabled(False)
         self.race_progress.setRange(0, 0)  # Indeterminate: the engine reports no numeric progress.
         self.race_progress.setFormat('Processing…')
         self.race_state.setText(f'Processing {mode} music…'); self.log(f'Win/Lose processing started: {mode}')
@@ -2408,6 +2412,50 @@ class Window(QMainWindow):
         self.race_process.setWorkingDirectory(str(self.root))
         self.race_process.setProgram(sys.executable)
         self.race_process.setArguments(['-u',str(script),str(self.root),mode])
+        self.race_process.setProcessChannelMode(QProcess.MergedChannels)
+        self.race_process.readyReadStandardOutput.connect(self.race_output)
+        self.race_process.finished.connect(self.race_finished)
+        self.race_process.errorOccurred.connect(self.race_error)
+        self.race_process.start()
+
+    def race_remove_current(self, kind):
+        if any((self.race_busy, self.build_busy, self.extraction_busy, self.soundtrack_busy,
+                self.custom_busy, self.title_busy, self.loading_busy)):
+            return
+        if not self.profile_verified:
+            QMessageBox.warning(self, 'Profile not verified', 'Wait for automatic SHA-256 verification.'); return
+        table = self.race_current_tables[kind]
+        selected = [table.item(index.row(), 0).data(Qt.UserRole)
+                    for index in table.selectionModel().selectedRows()]
+        names = [Path(path).name for path in selected if isinstance(path, str)]
+        if not names:
+            QMessageBox.information(self, 'No soundtrack selected', 'Select current soundtracks to remove.'); return
+        script = self.root/'supporting_tools/remove_race_soundtracks.py'
+        if not script.is_file():
+            QMessageBox.warning(self, 'Removal utility missing', 'Cannot find remove_race_soundtracks.py.'); return
+        message = ('Remove these installed '+kind+' soundtracks?\n\n'+'\n'.join(names)
+                   +'\n\nIdentical copies are removed together. Remaining songs are kept. '
+                   'If none remain, a placeholder keeps the playlists nonempty. '
+                   'The one-song and empty Win/Lose cases still require in-game verification. '
+                   'Staged MP3/WAV sources are kept. Build an ISO to test the result.')
+        if QMessageBox.question(self, 'Remove current soundtracks', message,
+                                QMessageBox.Yes | QMessageBox.No, QMessageBox.No) != QMessageBox.Yes:
+            return
+        self.race_preview_stop()
+        self.race_busy = True
+        self.race_prompt_answered = True  # This utility is noninteractive after the GUI confirmation.
+        self.race_prompt_tail = ''
+        self.race_active_mode = 'remove'
+        for button in self.race_buttons + self.race_current_remove_buttons:
+            button.setEnabled(False)
+        self.race_progress.setRange(0, 0)
+        self.race_state.setText('Removing selected '+kind+' soundtracks…')
+        self.log('Removing current '+kind+' soundtracks: '+', '.join(names))
+        self.race_process = QProcess(self)
+        self.race_process.setWorkingDirectory(str(self.root))
+        self.race_process.setProgram(sys.executable)
+        self.race_process.setArguments(['-u', str(script), '--root', str(self.root), '--kind', kind,
+                                       '--selected', *names, '--apply'])
         self.race_process.setProcessChannelMode(QProcess.MergedChannels)
         self.race_process.readyReadStandardOutput.connect(self.race_output)
         self.race_process.finished.connect(self.race_finished)
@@ -2435,15 +2483,18 @@ class Window(QMainWindow):
     def race_error(self,error):
         if error == QProcess.FailedToStart:
             self.log('ERROR: Win/Lose utility could not start: '+self.race_process.errorString())
+            if self.race_busy:
+                self.race_finished(-1, QProcess.CrashExit)
 
     def race_finished(self,code,status):
+        if not self.race_busy: return
         self.race_output()
         success=status==QProcess.NormalExit and code==0 and self.race_prompt_answered
         self.race_busy=False
         self.race_progress.setRange(0, 100)
         self.race_progress.setValue(100 if success else 0)
         self.race_progress.setFormat('%p%' if success else 'Stopped — see Activity Log')
-        for button in self.race_buttons: button.setEnabled(True)
+        for button in self.race_buttons + self.race_current_remove_buttons: button.setEnabled(True)
         if success:
             self.race_state.setText('Win/Lose music updated. Build an ISO to test in PCSX2.')
             self.log('Win/Lose music operation completed successfully.')
