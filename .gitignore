@@ -253,3 +253,15 @@ __pycache__/
 # Editor backups
 *.bak
 
+# Isolated Win test intermediates; keep scripts and small result reports tracked.
+/VIP ISO Analyzer/Two_Win_Skip2_Test/ASSETS/
+/VIP ISO Analyzer/Two_Win_Skip2_Test/STREAMS/
+/VIP ISO Analyzer/Two_Win_Skip2_Test/ISO_FILES/
+/VIP ISO Analyzer/Two_Win_Skip2_Test/supporting_tools/
+/VIP ISO Analyzer/Two_Win_Skip2_Test/encode_*/
+/VIP ISO Analyzer/Two_Win_Skip2_Test/active_before.json
+/VIP ISO Analyzer/Two_Win_Skip2_Test/Intermediate_Cleanup.json
+/VIP ISO Analyzer/Two_Win_Run_*/
+*.iso.partial
+*.iso.building.tmp
+
