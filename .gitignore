@@ -226,8 +226,13 @@ __marimo__/
 /UI Custom Gameplay Music Tools/ASSETS/
 /UI Custom Gameplay Music Tools/ISO_FILES/
 /UI Custom Gameplay Music Tools/STREAMS/
-/UI Custom Gameplay Music Tools/Custom Music/
-/UI Custom Gameplay Music Tools/Loading Music/
+# Preserve staging directories while ignoring all user audio and other contents.
+/UI Custom Gameplay Music Tools/Custom Music/**
+!/UI Custom Gameplay Music Tools/Custom Music/**/
+!/UI Custom Gameplay Music Tools/Custom Music/**/.gitkeep
+/UI Custom Gameplay Music Tools/Loading Music/**
+!/UI Custom Gameplay Music Tools/Loading Music/**/
+!/UI Custom Gameplay Music Tools/Loading Music/**/.gitkeep
 /UI Custom Gameplay Music Tools/support_logs/
 /VIP ISO Analyzer/Boundary_Probes/
 /VIP ISO Analyzer/Loading_Audio_Probes/
