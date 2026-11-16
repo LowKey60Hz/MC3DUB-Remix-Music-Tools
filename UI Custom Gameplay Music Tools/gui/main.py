@@ -43,6 +43,13 @@ QPushButton#navActive { background: #452127; border-left: 3px solid #f04455; col
 QPushButton#primary { background: #8d2834; border-color: #c53d4b; text-align: center; }
 QPushButton#primary:hover { background: #a53240; }
 QTextEdit { background: #101115; border: 1px solid #33363e; border-radius: 5px; color: #d4d7de; font-family: Consolas; font-size: 11px; }
+QLabel { background: transparent; }
+QLabel[dashboardValue="true"] {
+    background: #15171b;
+    border-radius: 8px;
+    padding: 10px 12px;
+    min-height: 24px;
+}
 QLabel#muted { color: #a4a8b1; }
 QLabel#heading { font-size: 19px; font-weight: 650; }
 QLabel#accent { color: #ff6472; font-weight: 600; }
@@ -454,20 +461,20 @@ class Window(QMainWindow):
         h = QLabel('Dashboard'); h.setObjectName('heading'); v.addWidget(h)
         card, cv = self.panel('Current Workspace')
         self.profile = QLabel('Game profile: Not detected'); cv.addWidget(self.profile)
-        self.workspace = QLabel('Workspace: Checking…'); self.workspace.setObjectName('muted'); cv.addWidget(self.workspace)
-        self.source = QLabel('Recorded source ISO: Not recorded'); self.source.setObjectName('muted'); self.source.setWordWrap(True)
+        # Keep internal status targets for background checks, outside the visible card.
+        self.workspace = QLabel('Workspace: Checking…', card); self.workspace.hide()
+        self.source = QLabel('Source ISO: Not recorded'); self.source.setObjectName('muted'); self.source.setWordWrap(True)
         self.source.setTextInteractionFlags(Qt.TextSelectableByMouse); self.source.setMinimumHeight(48)
         cv.addWidget(self.source)
-        self.validation = QLabel('Profile validation: Not run'); self.validation.setObjectName('muted'); self.validation.setWordWrap(True); cv.addWidget(self.validation)
+        self.validation = QLabel('Profile validation: Not run', card); self.validation.hide()
         v.addWidget(card)
         overview = QHBoxLayout(); overview.setSpacing(12)
         card, cv = self.panel('Total Gameplay & Garage Songs')
         self.dashboard_song_total = QLabel('—')
         self.dashboard_song_total.setStyleSheet('font-size: 32px; font-weight: 700; color: #ff6472;')
         cv.addWidget(self.dashboard_song_total)
-        self.dashboard_song_status = QLabel('Load an ISO workspace to see your soundtrack.')
-        self.dashboard_song_status.setObjectName('muted'); self.dashboard_song_status.setWordWrap(True)
-        cv.addWidget(self.dashboard_song_status)
+        self.dashboard_song_status = QLabel('Load an ISO workspace to see your soundtrack.', card)
+        self.dashboard_song_status.hide()
         overview.addWidget(card, 1)
         card, cv = self.panel('Current Title Theme Soundtrack')
         self.dashboard_title_theme = QLabel('—')
@@ -503,6 +510,9 @@ class Window(QMainWindow):
             self.dashboard_race_counts[kind] = count
             race_counts.addLayout(column, 1)
         cv.addLayout(race_counts); v.addWidget(card)
+        for value in (self.profile, self.source, self.dashboard_song_total, self.dashboard_title_theme,
+                      *self.dashboard_genre_counts.values(), *self.dashboard_race_counts.values()):
+            value.setProperty('dashboardValue', True)
         v.addStretch(1)
         scroll = QScrollArea(); scroll.setWidgetResizable(True); scroll.setFrameShape(QFrame.NoFrame)
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -3119,17 +3129,62 @@ class Window(QMainWindow):
         QMessageBox.critical(self,'ISO build failed',reason+'\nSee Activity Log for details.')
 
     def section(self, label, title):
+        if label == 'About':
+            return self.about_page()
         page = QWidget(); v = QVBoxLayout(page); v.setContentsMargins(0,0,0,0); v.setSpacing(13)
         h = QLabel(label); h.setObjectName('heading'); v.addWidget(h)
         card, cv = self.panel(title)
         info = QLabel('This workflow will be connected to the existing tested Python utilities in a later phase.\nNo game files will be changed in this preview.')
         info.setWordWrap(True); info.setObjectName('muted'); cv.addWidget(info)
-        if label == 'About':
-            info.setText('MC3 Ultimate Music Tools\nRetail USA and verified VIP Expansion sources, including VIP v1.1-A.\nBuilds check archive capacity and resource offsets before creating a separate verified ISO.')
-        if label != 'About':
-            action = QPushButton('Run ' + label); action.setEnabled(False); cv.addWidget(action)
+        action = QPushButton('Run ' + label); action.setEnabled(False); cv.addWidget(action)
         v.addWidget(card); v.addStretch(1)
         return page
+
+    def about_page(self):
+        page = QWidget(); layout = QVBoxLayout(page)
+        layout.setContentsMargins(0, 0, 0, 0); layout.setSpacing(13)
+        heading = QLabel('About'); heading.setObjectName('heading'); layout.addWidget(heading)
+        card, body = self.panel('MC3 Ultimate Music Tools')
+        owner = QLabel('Project owner and maintainer: LowKey60Hz')
+        owner.setStyleSheet('font-size: 16px; font-weight: 600;'); body.addWidget(owner)
+        description = QLabel('Custom application code, GUI, and project-specific music workflows by LowKey60Hz. '
+                             'Third-party tools and libraries remain credited to their respective authors.')
+        description.setWordWrap(True); body.addWidget(description)
+        quote = QLabel('“I just wanted to play MC3 with my own tunes :)” — LowKey60Hz')
+        quote.setWordWrap(True); quote.setStyleSheet('font-style: italic; color: #ff6472; padding: 8px 0;')
+        body.addWidget(quote); layout.addWidget(card)
+        card, body = self.panel('Third-Party Credits')
+        credits = QLabel(
+            '<p><b>Edness (EdnessP)</b> — <code>dave.py</code> and <code>hash_build.py</code> '
+            'for archive extraction/building; <code>rstm_build.py</code> for RSM audio building; '
+            '<code>strtbl.py</code> for string tables. '
+            '<a href="https://ednessp.github.io/tools">Author’s tools and source links</a>.</p>'
+            '<p><b>Sony Computer Entertainment Inc.</b> — <code>ps2str.exe</code>; '
+            'the bundled executable carries a 1999–2000 copyright notice. '
+            '<code>encvag.dll</code> is an external encoder dependency; its authorship/license '
+            'has not been verified from the local distribution.</p>'
+            '<p><b>MFAudio</b> — external PS2 audio conversion tool. '
+            'Author and redistribution terms were not verified from the bundled copy.</p>'
+            '<p><b>Python Software Foundation and Python contributors</b> — Python runtime. '
+            '<b>Qt Company and Qt contributors</b> — Qt/PySide6 interface and multimedia. '
+            '<b>NumPy, SciPy, python-soundfile/libsndfile, and python-sounddevice/PortAudio contributors</b> '
+            '— numerical processing, audio conversion, and playback.</p>')
+        credits.setWordWrap(True); credits.setOpenExternalLinks(True)
+        credits.setTextInteractionFlags(Qt.TextBrowserInteraction); body.addWidget(credits)
+        layout.addWidget(card)
+        card, body = self.panel('Notices')
+        notices = QLabel('An independent community project for Midnight Club 3: DUB Edition Remix. '
+                         'Not affiliated with or endorsed by Rockstar Games, Take-Two Interactive, Sony, '
+                         'or the credited tool authors. Game content, music, trademarks, and third-party code '
+                         'remain the property of their respective owners.\n\n'
+                         'See THIRD_PARTY_NOTICES.md in the repository root for attribution sources and '
+                         'license notes. Attribution does not grant redistribution rights; components with '
+                         'unverified terms require a separate permission/license check before distribution.')
+        notices.setWordWrap(True); body.addWidget(notices); layout.addWidget(card)
+        layout.addStretch(1)
+        scroll = QScrollArea(); scroll.setWidgetResizable(True); scroll.setFrameShape(QFrame.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff); scroll.setWidget(page)
+        return scroll
 
     def navigate(self, index):
         if self.stack.currentIndex() == 2 and index != 2:
@@ -3220,7 +3275,7 @@ class Window(QMainWindow):
         known = {'retail': 'Retail USA', 'vip': 'VIP Expansion'}
         consistent = profile in known and expected.get(kind) == profile
         label = known.get(profile, 'Not detected' if profile is None else 'Unknown / invalid')
-        self.profile.setText(f'Game profile: {label} ({"metadata consistent" if consistent else "unverified metadata"})')
+        self.profile.setText(f'Game profile: {label}')
         needed = ('ASSETS.DAT', 'STREAMS.DAT', 'STREAMS.LST')
         missing = [name for name in needed if not (workspace / name).is_file()]
         if not workspace.is_dir():
@@ -3231,11 +3286,9 @@ class Window(QMainWindow):
             status = 'Required archives and manifest present (not validated)'
         self.workspace.setText('Workspace: ' + status)
         if source_text:
-            source_path = Path(source_text)
-            source_status = 'found' if source_path.is_file() else 'missing'
-            self.source.setText(f'Recorded source ISO ({source_status}):\n{source_text}')
+            self.source.setText(f'Source ISO:\n{source_text}')
         else:
-            self.source.setText('Recorded source ISO: Not recorded')
+            self.source.setText('Source ISO: Not recorded')
         if not (self.validator and self.validator.state() != QProcess.NotRunning):
             self.validation.setText('Profile integrity: Awaiting automatic verification' if consistent and not missing else 'Profile integrity: Not available — workspace incomplete')
         self.log(f'Workspace checked: {workspace} (metadata inspected)')
