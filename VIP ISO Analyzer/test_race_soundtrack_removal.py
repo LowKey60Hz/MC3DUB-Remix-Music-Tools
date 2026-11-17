@@ -1,5 +1,6 @@
 """Removal and replacement regressions; all mutations use temporary workspaces."""
 import contextlib
+import hashlib
 import io
 import json
 from pathlib import Path
@@ -160,6 +161,85 @@ class RemovalTests(unittest.TestCase):
             self.assertEqual(sync.main(), 0)
         self.assertEqual(self.plays[0].read_text().splitlines(), ['num_songs: 1', r'music\Win_Lose\win1'])
         self.assertEqual((self.music/'win1.rsm').read_bytes(), b'new song')
+
+    def prepare_add(self, kind='Win'):
+        staged = self.root/'Custom Music'/('2_Win' if kind == 'Win' else '2_Lose')
+        staged.mkdir(parents=True, exist_ok=True)
+        song = staged/(kind+'.mp3')
+        song.write_bytes(('custom '+kind+' song').encode())
+        tools = self.root/'supporting_tools'
+        tools.mkdir(exist_ok=True)
+        for name in ('audio_processor.py', 'rstm_build.py', 'ps2str.exe'):
+            (tools/name).touch()
+        return song, hashlib.sha256(song.read_bytes()).hexdigest()
+
+    def add_with_encoder(self):
+        def encode(song, output, *_):
+            output.write_bytes(b'encoded '+song.read_bytes())
+        with patch.object(sync, 'encode', side_effect=encode) as encoder, patch('builtins.input', return_value='y'), \
+                patch.object(sys, 'argv', ['sync', str(self.root), 'add']), contextlib.redirect_stdout(io.StringIO()) as log:
+            self.assertEqual(sync.main(), 0, log.getvalue())
+        return encoder, log.getvalue()
+
+    def test_legacy_history_does_not_skip_restored_win_and_lose_audio(self):
+        win, win_hash = self.prepare_add('Win')
+        lose, lose_hash = self.prepare_add('Lose')
+        history = self.root/'support_logs/winlose_add_history.json'
+        history.write_text(json.dumps({'Win': {win_hash: 'win1'}, 'Lose': {lose_hash: 'loose1'}}))
+        _, log = self.add_with_encoder()
+        self.assertIn('[STALE HISTORY]', log)
+        self.assertEqual((self.music/'win1.rsm').read_bytes(), b'A')
+        self.assertEqual((self.music/'loose1.rsm').read_bytes(), b'L')
+        records = json.loads(history.read_text())
+        for kind, song, source_hash in [('Win', win, win_hash), ('Lose', lose, lose_hash)]:
+            record = records[kind][source_hash]
+            audio = self.music/(record['slot']+'.rsm')
+            self.assertEqual(audio.read_bytes(), b'encoded '+song.read_bytes())
+            self.assertEqual(record['rsm_sha256'], hashlib.sha256(audio.read_bytes()).hexdigest())
+        # Repeating Add now proves the installed audio and does no conversion.
+        encoder, log = self.add_with_encoder()
+        encoder.assert_not_called()
+        self.assertIn('Already added (audio verified)', log)
+
+    def test_legacy_history_is_migrated_only_after_matching_audio(self):
+        song, source_hash = self.prepare_add()
+        (self.music/'win1.rsm').write_bytes(b'encoded '+song.read_bytes())
+        history = self.root/'support_logs/winlose_add_history.json'
+        history.write_text(json.dumps({'Win': {source_hash: 'win1'}}))
+        before = {p: p.read_bytes() for p in self.plays}
+        encoder, log = self.add_with_encoder()
+        self.assertEqual(encoder.call_count, 1)  # Verification only.
+        self.assertIn('No new songs to install', log)
+        self.assertEqual({p: p.read_bytes() for p in self.plays}, before)
+        record = json.loads(history.read_text())['Win'][source_hash]
+        self.assertEqual(record['slot'], 'win1')
+        self.assertEqual(record['rsm_sha256'], hashlib.sha256((self.music/'win1.rsm').read_bytes()).hexdigest())
+
+    def test_changed_audio_invalidates_hash_verified_history(self):
+        song, source_hash = self.prepare_add()
+        expected = b'encoded '+song.read_bytes()
+        history = self.root/'support_logs/winlose_add_history.json'
+        history.write_text(json.dumps({'Win': {source_hash: {'slot': 'win1',
+                           'rsm_sha256': hashlib.sha256(expected).hexdigest()}}}))
+        encoder, log = self.add_with_encoder()
+        self.assertEqual(encoder.call_count, 1)  # New installation, no legacy verification.
+        self.assertIn('[STALE HISTORY]', log)
+        record = json.loads(history.read_text())['Win'][source_hash]
+        self.assertNotEqual(record['slot'], 'win1')
+        self.assertEqual((self.music/(record['slot']+'.rsm')).read_bytes(), expected)
+
+    def test_unreferenced_audio_is_not_treated_as_installed_for_playback(self):
+        song, source_hash = self.prepare_add()
+        audio = self.music/'win9.rsm'
+        audio.write_bytes(b'encoded '+song.read_bytes())
+        history = self.root/'support_logs/winlose_add_history.json'
+        history.write_text(json.dumps({'Win': {source_hash: {'slot': 'win9',
+                           'rsm_sha256': hashlib.sha256(audio.read_bytes()).hexdigest()}}}))
+        encoder, log = self.add_with_encoder()
+        self.assertEqual(encoder.call_count, 1)
+        self.assertIn('[STALE HISTORY]', log)
+        record = json.loads(history.read_text())['Win'][source_hash]
+        self.assertIn('music\\Win_Lose\\'+record['slot'], self.plays[0].read_text())
 
 
 if __name__ == '__main__':

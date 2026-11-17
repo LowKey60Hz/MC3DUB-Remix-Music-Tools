@@ -8,7 +8,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
-from remove_race_soundtracks import PLACEHOLDERS, slot_entries
+from remove_race_soundtracks import PLACEHOLDERS, slot_entries, digest as rsm_digest
 
 CONFIG = {
     'Win': ('2_Win', 'win', '*_raceover_music.play'),
@@ -104,9 +104,12 @@ def main():
     history_path = root / 'support_logs' / 'winlose_add_history.json'
     try:
         history = json.loads(history_path.read_text(encoding='utf-8')) if history_path.exists() else {}
+        if not isinstance(history, dict) or any(not isinstance(value, dict) for value in history.values()):
+            raise ValueError('Invalid add history format')
     except (ValueError, OSError):
         return fail('Cannot read Win/Lose add history. Repair or remove it before continuing.')
     staged_plan = {}
+    history_upgraded = False
     for kind, info in groups.items():
         prefix = info['prefix']
         existing = sorted((p for p in music.iterdir() if p.is_file() and re.fullmatch(prefix + r'\d+\.rsm', p.name, re.I)), key=lambda p: p.name.casefold())
@@ -121,13 +124,39 @@ def main():
             used = {p.stem.casefold() for p in existing}
             used.update(x.rsplit('\\', 1)[-1].casefold() for x in info['entries'])
             previous = history.get(kind, {})
+            referenced = {entry.rsplit('\\', 1)[-1].casefold()
+                          for entry in next(iter(info['data'].values()))[1]}
             plan = []
             for song in info['songs']:
                 digest = hashlib.sha256(song.read_bytes()).hexdigest()
                 record = previous.get(digest)
-                if record and record in used and (music / (record + '.rsm')).is_file():
-                    print(f'[SKIP] Already added: {song.name} -> {record}.rsm')
-                    continue
+                recorded_slot = record.get('slot') if isinstance(record, dict) else record
+                if (isinstance(recorded_slot, str) and re.fullmatch(prefix+r'\d+', recorded_slot, re.I)
+                        and recorded_slot.casefold() in referenced
+                        and (music/(recorded_slot+'.rsm')).is_file()):
+                    installed = music/(recorded_slot+'.rsm')
+                    installed_hash = rsm_digest(installed)
+                    expected_hash = record.get('rsm_sha256') if isinstance(record, dict) else None
+                    if not expected_hash:
+                        # Old history recorded only a slot name, which can refer to
+                        # original/restored audio after extraction. Verify the source.
+                        print(f'[VERIFY] Checking unverified add history: {song.name}', flush=True)
+                        try:
+                            with tempfile.TemporaryDirectory(prefix='mc3_winlose_verify_') as temporary:
+                                scratch = Path(temporary)
+                                candidate = scratch/'candidate.rsm'
+                                encode(song, candidate, tools, scratch)
+                                expected_hash = rsm_digest(candidate)
+                        except (OSError, RuntimeError) as exc:
+                            return fail(f'Cannot verify previous installation of {song.name}: {exc}; game files unchanged.')
+                    if expected_hash == installed_hash:
+                        previous[digest] = {'slot': recorded_slot, 'rsm_sha256': installed_hash}
+                        history[kind] = previous
+                        history_upgraded = True
+                        print(f'[SKIP] Already added (audio verified): {song.name} -> {recorded_slot}.rsm')
+                        continue
+                if record is not None:
+                    print(f'[STALE HISTORY] {song.name}: previous audio is missing, different, or unreferenced; adding it again.')
                 i = 1
                 while f'{prefix}{i}' in used:
                     i += 1
@@ -145,6 +174,9 @@ def main():
         for song, stem, _ in plan:
             print(f'  {song.name} -> {stem}.rsm')
     if not any(staged_plan.values()):
+        if history_upgraded:
+            history_path.parent.mkdir(exist_ok=True)
+            history_path.write_text(json.dumps(history, indent=2)+'\n', encoding='utf-8')
         print('[INFO] No new songs to install. No changes made.')
         return 0
     print('[NOTE] No permanent RSM backups are created. You can restore from the original ISO.')
@@ -198,7 +230,7 @@ def main():
                     previous = history.setdefault(kind, {})
                     for _, stem, digest in plan:
                         if digest is not None:
-                            previous[digest] = stem
+                            previous[digest] = {'slot': stem, 'rsm_sha256': rsm_digest(music/(stem+'.rsm'))}
             if mode == 'add':
                 history_path.parent.mkdir(exist_ok=True)
                 history_path.write_text(json.dumps(history, indent=2) + '\n', encoding='utf-8')

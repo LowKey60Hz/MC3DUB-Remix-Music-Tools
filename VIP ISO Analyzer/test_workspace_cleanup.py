@@ -1,6 +1,8 @@
 """Cleanup tests operate exclusively on temporary miniature project fixtures."""
 import contextlib
 import io
+import json
+import os
 from pathlib import Path
 import stat
 import subprocess
@@ -31,6 +33,54 @@ def fixture(directory):
 
 
 class CleanupTests(unittest.TestCase):
+    @unittest.skipUnless(sys.platform == 'win32', 'Windows launcher regression')
+    def test_running_launcher_logs_do_not_block_workspace_reset(self):
+        with tempfile.TemporaryDirectory(prefix='launcher cleanup ') as directory:
+            root, iso = fixture(directory)
+            # Exercise the real launcher with process creation intercepted, so no
+            # actual GUI is started and no user's workspace is modified.
+            launcher = root/'Launch_MC3_GUI.ps1'
+            shutil_source = GUI.parent/'Launch_MC3_GUI.ps1'
+            launcher.write_bytes(shutil_source.read_bytes())
+            (root/'.venv/Scripts').mkdir(parents=True)
+            (root/'.venv/Scripts/python.exe').touch()
+            (root/'gui').mkdir()
+            (root/'gui/main.py').touch()
+            command = '''
+function Start-Process {
+    param($FilePath, $ArgumentList, $WorkingDirectory, $WindowStyle,
+          $RedirectStandardOutput, $RedirectStandardError)
+    @{ stdout = $RedirectStandardOutput; stderr = $RedirectStandardError;
+       window = $WindowStyle; working = $WorkingDirectory } | ConvertTo-Json -Compress
+}
+& $env:MC3_TEST_LAUNCHER
+'''
+            process = subprocess.run(['powershell.exe', '-NoProfile', '-NonInteractive',
+                                      '-ExecutionPolicy', 'Bypass', '-Command', command],
+                                     env=dict(os.environ, MC3_TEST_LAUNCHER=str(launcher)),
+                                     capture_output=True, text=True)
+            self.assertEqual(process.returncode, 0, process.stderr)
+            launch = json.loads(process.stdout)
+            stdout, stderr = Path(launch['stdout']), Path(launch['stderr'])
+            self.assertEqual(launch['window'], 'Hidden')
+            self.assertEqual(Path(launch['working']), root)
+            for log in (stdout, stderr):
+                self.assertTrue(log.is_relative_to(root))
+                self.assertFalse(any(log.is_relative_to(root/name) for name in cleanup.WORKSPACE_FOLDERS))
+            # Ordinary Windows file handles deny deletion while open, like the
+            # redirected startup logs that triggered the reported WinError 32.
+            with stdout.open('w') as out, stderr.open('w') as err:
+                out.write('GUI stdout'); out.flush()
+                err.write('GUI stderr'); err.flush()
+                with contextlib.redirect_stdout(io.StringIO()):
+                    cleared = cleanup.clear_workspace(root, iso)
+                self.assertEqual(cleared, list(cleanup.WORKSPACE_FOLDERS))
+                self.assertTrue(stdout.is_file())
+                self.assertTrue(stderr.is_file())
+            self.assertEqual(stdout.read_text(), 'GUI stdout')
+            self.assertEqual(stderr.read_text(), 'GUI stderr')
+            self.assertEqual(iso.read_bytes(), b'keep original')
+
     def test_only_owned_directories_are_removed(self):
         with tempfile.TemporaryDirectory() as directory:
             root, iso = fixture(directory)

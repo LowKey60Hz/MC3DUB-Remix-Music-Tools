@@ -234,6 +234,10 @@ __marimo__/
 !/UI Custom Gameplay Music Tools/Loading Music/**/
 !/UI Custom Gameplay Music Tools/Loading Music/**/.gitkeep
 /UI Custom Gameplay Music Tools/support_logs/
+# Personal music-library backups and interrupted export staging.
+/UI Custom Gameplay Music Tools/*.zip
+/UI Custom Gameplay Music Tools/.mc3_export_*/
+/UI Custom Gameplay Music Tools/launcher_logs/
 /VIP ISO Analyzer/Boundary_Probes/
 /VIP ISO Analyzer/Loading_Audio_Probes/
 /VIP ISO Analyzer/VIP_v11A_ASSETS_*/

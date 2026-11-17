@@ -15,7 +15,9 @@ try {
         Write-Output 'GUI launcher paths verified.'
         exit 0
     }
-    $guiLogs = Join-Path $projectRoot 'support_logs'
+    # These handles stay open for the GUI's lifetime. Keep them outside the
+    # ISO workspace directories, which extraction may reset while we run.
+    $guiLogs = Join-Path $projectRoot 'launcher_logs'
     [System.IO.Directory]::CreateDirectory($guiLogs) | Out-Null
     $launchId = [Guid]::NewGuid().ToString('N')
     Start-Process -FilePath $guiPython -ArgumentList @('gui\main.py') `

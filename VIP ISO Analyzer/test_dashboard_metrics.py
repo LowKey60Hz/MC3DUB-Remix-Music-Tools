@@ -150,7 +150,7 @@ class DashboardTests(unittest.TestCase):
         table.selectRow(1)
         with patch.object(gui.QMessageBox, 'question', return_value=gui.QMessageBox.Yes), \
                 patch.object(gui, 'QProcess') as process:
-            self.window.race_remove_current('Win')
+            self.window.race_current_remove_buttons[0].click()
             args = process.return_value.setArguments.call_args.args[0]
             selected = args[args.index('--selected')+1:args.index('--apply')]
             self.assertEqual(selected, ['win2.rsm'])
@@ -168,9 +168,66 @@ class DashboardTests(unittest.TestCase):
         self.window.race_current_tables['Win'].selectRow(0)
         with patch.object(gui.QMessageBox, 'question', return_value=gui.QMessageBox.No), \
                 patch.object(gui, 'QProcess') as process:
-            self.window.race_remove_current('Win')
+            self.window.race_current_remove_buttons[0].click()
             process.assert_not_called()
         self.assertFalse(self.window.race_busy)
+
+    def test_staged_loading_preview_plays_four_times_and_stop_restores_single_play(self):
+        folder = self.root/'Loading Music'
+        folder.mkdir()
+        source = folder/'Artist - Loading.wav'
+        source.write_bytes(b'temporary audio fixture')
+        self.window.loading_refresh()
+        self.window.loading_table.selectRow(0)
+        player = self.window.loading_preview_player
+        with patch.object(player, 'setSource') as set_source, patch.object(player, 'play') as play:
+            self.window.loading_staged_preview_button.click()
+            self.assertEqual(player.loops(), 4)
+            self.assertEqual(Path(set_source.call_args.args[0].toLocalFile()), source)
+            play.assert_called_once()
+            self.assertEqual(self.window.loading_staged_preview_source, source)
+            self.window.loading_preview_stop()
+            self.assertEqual(player.loops(), 1)
+            self.assertIsNone(self.window.loading_staged_preview_source)
+
+    def test_staged_loading_preview_requires_a_selected_track(self):
+        with patch.object(self.window.loading_preview_player, 'play') as play:
+            self.window.loading_staged_preview()
+            play.assert_not_called()
+        self.assertIn('Select exactly one', self.window.loading_staged_preview_status.text())
+
+    def test_already_installed_tracks_are_a_successful_noop_without_prompt(self):
+        self.window.race_busy = True
+        self.window.race_process = None
+        self.window.race_prompt_answered = False
+        self.window.race_prompt_tail = '[INFO] No new songs to install. No changes made.\n'
+        with patch.object(gui.QMessageBox, 'information') as info, patch.object(gui.QMessageBox, 'warning') as warning:
+            self.window.race_finished(0, gui.QProcess.NormalExit)
+        warning.assert_not_called()
+        self.assertEqual(info.call_args.args[1], 'No changes needed')
+        self.assertIn('already installed', self.window.race_state.text())
+        self.assertNotIn('Build', info.call_args.args[2])
+        self.assertFalse(self.window.race_busy)
+
+    def test_noop_message_does_not_override_a_nonzero_exit(self):
+        self.window.race_busy = True
+        self.window.race_process = None
+        self.window.race_prompt_answered = False
+        self.window.race_prompt_tail = '[INFO] No new songs to install. No changes made.\n'
+        with patch.object(gui.QMessageBox, 'information') as info, patch.object(gui.QMessageBox, 'warning') as warning:
+            self.window.race_finished(1, gui.QProcess.NormalExit)
+        warning.assert_called_once()
+        info.assert_not_called()
+
+    def test_zero_exit_without_confirmation_or_noop_is_not_claimed_as_updated(self):
+        self.window.race_busy = True
+        self.window.race_process = None
+        self.window.race_prompt_answered = False
+        self.window.race_prompt_tail = '[CANCELED] No changes made.\n'
+        with patch.object(gui.QMessageBox, 'information') as info, patch.object(gui.QMessageBox, 'warning') as warning:
+            self.window.race_finished(0, gui.QProcess.NormalExit)
+        warning.assert_called_once()
+        info.assert_not_called()
 
     def test_unverified_workspace_hides_old_numbers_and_theme(self):
         self.window.update_dashboard_metrics()

@@ -61,6 +61,34 @@ class RestartTests(unittest.TestCase):
         self.assertIsNone(self.window.workspace_reset_authorization)
         self.assertTrue(all((self.root / name / 'nested/old.json').is_file() for name in cleanup.WORKSPACE_FOLDERS))
 
+    def test_logs_alone_do_not_report_a_loaded_workspace(self):
+        with patch('sys.stdout'):
+            cleanup.clear_workspace(self.root, self.iso)
+        log = self.root/'support_logs/old_gui.stderr.log'
+        log.write_text('previous extraction failed')
+        with patch.object(gui.QFileDialog, 'getOpenFileName', return_value=(str(self.iso), '')), \
+                patch.object(gui.QMessageBox, 'question') as question, \
+                patch.object(gui.Window, 'begin_extraction') as begin:
+            self.window.select_iso()
+            question.assert_not_called()
+            begin.assert_not_called()
+        self.assertEqual(self.window.iso_path, self.iso)
+        self.assertIsNone(self.window.workspace_reset_authorization)
+        self.assertEqual(log.read_text(), 'previous extraction failed')
+        with patch.object(gui.QMessageBox, 'question', return_value=gui.QMessageBox.Yes) as question, \
+                patch.object(gui.Window, 'next_extraction_step'):
+            self.window.begin_extraction()
+        self.assertEqual(question.call_args.args[1], 'Confirm ISO extraction')
+        self.assertNotIn('Clear previous ISO workspace', [step[0] for step in self.window.extraction_steps])
+
+    def test_partial_game_data_still_requires_restart_confirmation(self):
+        with patch('sys.stdout'):
+            cleanup.clear_workspace(self.root, self.iso)
+        (self.root/'ISO_FILES').mkdir()
+        with patch.object(gui.QMessageBox, 'question', return_value=gui.QMessageBox.No) as question:
+            self.assertFalse(self.window.confirm_workspace_restart(self.iso))
+        self.assertEqual(question.call_args.args[1], 'ISO Workspace Already Loaded')
+
     def test_yes_defers_cleanup_until_both_preflight_checks_pass(self):
         self.begin()
         labels = [s[0] for s in self.window.extraction_steps]

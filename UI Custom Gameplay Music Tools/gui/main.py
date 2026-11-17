@@ -11,14 +11,15 @@ import tempfile
 import wave
 import uuid
 from workspace_cleanup import cleanup_plan
-from PySide6.QtCore import Qt, QProcess, QUrl
+from PySide6.QtCore import Qt, QProcess, QUrl, QThread, Signal
+from music_library import export_library, import_library, inspect_duplicates
 from frontend_playlist import resolve_frontend_rsm, FrontendPlaylistError
 from race_playlist import read_display_race_tracks
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QHBoxLayout, QVBoxLayout,
     QLabel, QPushButton, QFrame, QStackedWidget, QTextEdit, QFileDialog, QMessageBox,
     QSizePolicy, QProgressBar, QScrollArea, QComboBox, QTableWidget, QTableWidgetItem, QHeaderView, QAbstractItemView, QLineEdit, QSlider,
-    QStyledItemDelegate, QStyle, QGridLayout)
+    QStyledItemDelegate, QStyle, QGridLayout, QCheckBox)
 
 ROOT = Path(__file__).resolve().parent.parent
 SECTIONS = [
@@ -26,10 +27,11 @@ SECTIONS = [
     ('ISO Extraction - Start Here', 'ISO Extraction'),
     ('Remove Soundtracks', 'Remove Current Gameplay Soundtrack(s)'),
     ('Gameplay / Garage Music', 'Custom Gameplay and Garage Music'),
-    ('Title Theme Soundtrack', 'Update Title Music'),
+    ('Title Theme Soundtrack', 'Update Title Soundtrack'),
     ('Lose/Win (Race Transition) Music', 'Update Lose, Win & Race Transition Music'),
     ('Loading Screen Music', 'Update Loading Screen Music'),
     ('Build ISO', 'Compile DAT Archives & Build ISO'),
+    ('Export/Import Music', 'Export/Import Music'),
     ('About', 'About'),
 ]
 STYLE = '''
@@ -300,11 +302,40 @@ class LoadingMusicTable(QTableWidget):
         self.owner.loading_stage_files(paths)
 
 
+class MusicLibraryWorker(QThread):
+    completed = Signal(object)
+    failed = Signal(str)
+    progress = Signal(int, int)
+
+    def __init__(self, action, root, archive, session, replace, parent, decisions=None, clear=False):
+        super().__init__(parent)
+        self.action, self.root, self.archive = action, root, archive
+        self.session, self.replace = session, replace
+        self.decisions, self.clear = decisions, clear
+
+    def run(self):
+        try:
+            if self.action == 'export':
+                result = export_library(self.root, self.archive, self.session,
+                                        overwrite=True, progress=self.progress.emit, clear_exported=self.clear,
+                                        expected_paths=(self.session or {}).get('expected_paths'))
+            elif self.action == 'review':
+                result = inspect_duplicates(self.root, self.archive)
+            else:
+                result = import_library(self.root, self.archive, replace=self.replace,
+                                        progress=self.progress.emit, decisions=self.decisions)
+            self.completed.emit(result)
+        except Exception as error:
+            self.failed.emit(str(error))
+
+
 class Window(QMainWindow):
     def __init__(self):
         super().__init__()
         self.root = ROOT
-        self.setWindowTitle('MC3 Ultimate Music Tools — Phase 9 Loading Screen Music')
+        self.setWindowTitle('Midnight Club 3: Dub Edition Music Tools')
+        self.library_busy = False
+        self.library_worker = None
         self.validator = None
         self.extractor = None
         self.iso_path = None
@@ -378,6 +409,7 @@ class Window(QMainWindow):
         self.custom_preview_player.durationChanged.connect(self.custom_preview_duration)
         self.loading_preview_temp = None
         self.loading_preview_slot = None
+        self.loading_staged_preview_source = None
         self.loading_preview_player = QMediaPlayer(self)
         self.loading_preview_output = QAudioOutput(self)
         self.loading_preview_output.setVolume(0.70)
@@ -408,8 +440,8 @@ class Window(QMainWindow):
         layout = QHBoxLayout(outer); layout.setContentsMargins(0, 0, 0, 0); layout.setSpacing(0)
         sidebar = QFrame(); sidebar.setObjectName('sidebar'); sidebar.setFixedWidth(202)
         side = QVBoxLayout(sidebar); side.setContentsMargins(10, 17, 10, 12); side.setSpacing(5)
-        name = QLabel('MC3 MUSIC TOOLS'); name.setObjectName('accent'); side.addWidget(name)
-        subtitle = QLabel('Ultimate Music Tools  •  v0.1'); subtitle.setObjectName('muted'); side.addWidget(subtitle)
+        name = QLabel('Music Tools'); name.setObjectName('accent'); side.addWidget(name)
+        subtitle = QLabel('v1.0'); subtitle.setObjectName('muted'); side.addWidget(subtitle)
         side.addSpacing(18)
         self.nav = []
         for i, (label, _) in enumerate(SECTIONS):
@@ -625,12 +657,8 @@ class Window(QMainWindow):
         except (ValueError, OSError) as error:
             QMessageBox.warning(self, 'Workspace restart unavailable', str(error))
             return False
-        # An empty support_logs folder alone is not a loaded ISO workspace.
-        try:
-            loaded = any(path.name != 'support_logs' or any(path.iterdir()) for path in targets)
-        except OSError as error:
-            QMessageBox.warning(self, 'Workspace restart unavailable', str(error))
-            return False
+        # Logs can survive a failed extraction; they do not establish game data.
+        loaded = any(path.name in ('ISO_FILES', 'ASSETS', 'STREAMS') for path in targets)
         if not loaded:
             self.workspace_reset_authorization = None
             return True
@@ -1365,8 +1393,6 @@ class Window(QMainWindow):
         category = self.custom_genre.currentData()
         self.custom_add_button.setEnabled(category is not None and not self.custom_busy)
         folders = [(label, folder) for label, folder in self.custom_genres if category is None or folder == category]
-        if not hasattr(self, 'custom_partial_metadata'):
-            self.custom_partial_metadata = {}
         entries = []
         for label, folder in folders:
             path = self.root / 'Custom Music' / folder
@@ -1383,10 +1409,7 @@ class Window(QMainWindow):
                 if ' - ' in file.stem:
                     artist, song = file.stem.split(' - ', 1)
                 else:
-                    # One-field filenames default to Artist; remember Song-only
-                    # edits within this GUI session because the filename alone
-                    # cannot distinguish the two columns.
-                    artist, song = self.custom_partial_metadata.get(str(file), (file.stem, ''))
+                    artist, song = file.stem, ''
                 for column, value in ((0,artist),(1,song)):
                     item = QTableWidgetItem(value)
                     item.setData(Qt.UserRole, str(file))
@@ -1597,10 +1620,9 @@ class Window(QMainWindow):
         row = item.row()
         artist = self.custom_table.item(row, 0).text().strip()
         song = self.custom_table.item(row, 1).text().strip()
-        # Exactly one field may be empty. Both empty is never valid.
-        if not artist and not song:
+        if not artist or not song:
             QMessageBox.warning(self, 'Invalid song details',
-                'Artist Name and Song Name cannot both be blank. At least one is required.')
+                'Both Artist Name and Song Name are required. Use Artist - Song filenames.')
             self.custom_refresh(); return
         invalid = set('<>:"/\\|?*')
         def valid(value):
@@ -1615,9 +1637,7 @@ class Window(QMainWindow):
         if self.custom_busy or self.title_busy or self.build_busy or self.extraction_busy or self.race_busy or self.soundtrack_busy:
             QMessageBox.warning(self, 'Processing in progress', 'Wait for processing to finish before renaming files.')
             self.custom_refresh(); return
-        # A one-field entry retains its single-name filename; two populated
-        # fields use the established Artist - Song convention.
-        stem = f'{artist} - {song}' if artist and song else (artist or song)
+        stem = f'{artist} - {song}'
         dest = old.with_name(f'{stem}{old.suffix}')
         if dest.exists() and dest != old:
             QMessageBox.warning(self, 'Filename already exists',
@@ -1627,11 +1647,6 @@ class Window(QMainWindow):
             if dest != old:
                 old.rename(dest)
                 self.log(f'Renamed staged music: {old.name} -> {dest.name}')
-            if not hasattr(self, 'custom_partial_metadata'):
-                self.custom_partial_metadata = {}
-            self.custom_partial_metadata.pop(str(old), None)
-            if not (artist and song):
-                self.custom_partial_metadata[str(dest)] = (artist, song)
         except OSError as exc:
             QMessageBox.critical(self, 'Rename failed', str(exc))
         self.custom_refresh()
@@ -1749,6 +1764,7 @@ class Window(QMainWindow):
             QMessageBox.information(self,'Custom music complete','Processing completed successfully. Build a modified ISO to test in PCSX2.')
             return
         label,filename = self.custom_steps[self.custom_index]
+        self.custom_stage_output = ''
         self.custom_state.setText(f'Stage {self.custom_index+1}/{len(self.custom_steps)}: {label}')
         self.log(f'CUSTOM MUSIC [{self.custom_index+1}/{len(self.custom_steps)}] {label}')
         process = QProcess(self)
@@ -1765,6 +1781,7 @@ class Window(QMainWindow):
     def custom_read(self):
         if self.custom_process:
             chunk = bytes(self.custom_process.readAllStandardOutput()).decode('utf-8',errors='replace')
+            self.custom_stage_output = (getattr(self, 'custom_stage_output', '') + chunk)[-32000:]
             for line in chunk.splitlines():
                 if line.strip(): self.log(line.rstrip())
 
@@ -1772,21 +1789,34 @@ class Window(QMainWindow):
         if not self.custom_busy: return
         self.custom_read()
         if status != QProcess.NormalExit or code != 0:
-            self.custom_fail(f'Stage {self.custom_index+1} failed (exit code {code}).'); return
+            stage = self.custom_steps[self.custom_index][0]
+            output = getattr(self, 'custom_stage_output', '')
+            errors = [line.strip() for line in output.splitlines()
+                      if re.search(r'\[(ERROR|STOP|CRITICAL)\]|Traceback|\b\w+Error:', line)]
+            details = '\n'.join(errors[-12:]) or '\n'.join(output.splitlines()[-8:])
+            message = f'{stage} failed (exit code {code}).'
+            if details:
+                message += '\n\n'+details
+            if 'Invalid artist - title filename' in output or 'Invalid Artist - Title filename' in output:
+                message += '\n\nBoth Artist Name and Song Name are required. Rename the listed files using Artist - Song.mp3 (or .wav).'
+            if 'Nothing converted or modified' in output:
+                message += '\n\nNo audio was converted and no game assets were modified by this attempt.'
+            self.custom_fail(message); return
         self.custom_index += 1
         self.custom_progress.setValue(self.custom_index)
         self.custom_next()
 
     def custom_error(self,error):
         if error == QProcess.FailedToStart:
-            self.custom_fail('Could not start the custom music processing utility.')
+            detail = self.custom_process.errorString() if self.custom_process else 'Unknown startup error'
+            self.custom_fail('Could not start the custom music processing utility: '+detail)
 
     def custom_fail(self,message):
         if not self.custom_busy: return
         self.custom_busy = False; self.custom_run.setEnabled(True)
-        self.custom_state.setText('Processing failed — see Activity Log.')
+        self.custom_state.setText(message.splitlines()[0])
         self.log('CUSTOM MUSIC FAILED: '+message)
-        QMessageBox.critical(self,'Custom music processing failed',message+'\nLater stages were not run. Check the Activity Log.')
+        QMessageBox.critical(self,'Custom music processing failed',message+'\n\nLater stages were not run. Full output is available in the Activity Log.')
 
     def title_music_page(self):
         page = QWidget(); v = QVBoxLayout(page); v.setContentsMargins(0,0,0,0); v.setSpacing(10)
@@ -1820,12 +1850,12 @@ class Window(QMainWindow):
         add = QPushButton('Select MP3/WAV…'); add.clicked.connect(self.title_add); buttons.addWidget(add)
         remove = QPushButton('Remove Staged Theme'); remove.clicked.connect(self.title_remove); buttons.addWidget(remove)
         cv.addLayout(buttons); v.addWidget(card)
-        card, cv = self.panel('Process Title Music')
+        card, cv = self.panel('Process Title Soundtrack')
         note = QLabel('Runs only update_title_theme.py. Gameplay music, garage music, and their metadata processing are not rerun.')
         note.setObjectName('muted'); note.setWordWrap(True); cv.addWidget(note)
         self.title_state = QLabel('Ready.'); self.title_state.setObjectName('muted'); cv.addWidget(self.title_state)
         self.title_progress = QProgressBar(); self.title_progress.setRange(0,1); self.title_progress.setValue(0); cv.addWidget(self.title_progress)
-        self.title_run = QPushButton('Update Title Music'); self.title_run.setObjectName('primary')
+        self.title_run = QPushButton('Update Title Soundtrack'); self.title_run.setObjectName('primary')
         self.title_run.clicked.connect(self.title_begin); cv.addWidget(self.title_run)
         v.addWidget(card); v.addStretch(1)
         self.title_refresh()
@@ -2094,10 +2124,6 @@ class Window(QMainWindow):
             current.setMinimumHeight(145)
             current_layout.addWidget(current, 1)
             self.race_current_tables[kind] = current
-            remove_current = QPushButton('Remove Selected '+kind+' Soundtrack(s)')
-            remove_current.clicked.connect(lambda _, k=kind: self.race_remove_current(k))
-            current_layout.addWidget(remove_current)
-            self.race_current_remove_buttons.append(remove_current)
             staged_label = QLabel(f'Staged {kind}/Race Transition Tracks' if kind == 'Win' else f'Staged {kind} Tracks')
             staged_label.setStyleSheet('font-weight: 600; color: #eceef2;')
             staged_layout.addWidget(staged_label)
@@ -2134,6 +2160,10 @@ class Window(QMainWindow):
         self.race_preview_status.setObjectName('muted')
         self.race_preview_status.setWordWrap(True)
         current_layout.addWidget(self.race_preview_status)
+        remove_current = QPushButton('Remove Selected Soundtrack(s)')
+        remove_current.clicked.connect(self.race_remove_current_selected)
+        current_layout.addWidget(remove_current)
+        self.race_current_remove_buttons.append(remove_current)
         self.race_preview_update_buttons()
 
         # Keep the processing controls directly beneath the staged tracks,
@@ -2428,6 +2458,13 @@ class Window(QMainWindow):
         self.race_process.errorOccurred.connect(self.race_error)
         self.race_process.start()
 
+    def race_remove_current_selected(self):
+        kind = self.race_preview_selected_kind()
+        if kind is None:
+            QMessageBox.information(self, 'No soundtrack selected', 'Select current Win or Lose soundtracks to remove.')
+            return
+        self.race_remove_current(kind)
+
     def race_remove_current(self, kind):
         if any((self.race_busy, self.build_busy, self.extraction_busy, self.soundtrack_busy,
                 self.custom_busy, self.title_busy, self.loading_busy)):
@@ -2499,13 +2536,20 @@ class Window(QMainWindow):
     def race_finished(self,code,status):
         if not self.race_busy: return
         self.race_output()
-        success=status==QProcess.NormalExit and code==0 and self.race_prompt_answered
+        no_changes = bool(re.search(r'\[INFO\] (?:No new songs to install|Both folders empty)\. No changes made\.',
+                                    self.race_prompt_tail))
+        success=status==QProcess.NormalExit and code==0 and (self.race_prompt_answered or no_changes)
         self.race_busy=False
         self.race_progress.setRange(0, 100)
         self.race_progress.setValue(100 if success else 0)
         self.race_progress.setFormat('%p%' if success else 'Stopped — see Activity Log')
         for button in self.race_buttons + self.race_current_remove_buttons: button.setEnabled(True)
-        if success:
+        if success and no_changes:
+            message = 'No new tracks to add; the staged tracks are already installed.' if 'No new songs' in self.race_prompt_tail else 'No staged audio to process.'
+            self.race_state.setText(message)
+            self.log('Win/Lose processing completed: no changes were needed.')
+            QMessageBox.information(self, 'No changes needed', message+'\nNo game files were changed.')
+        elif success:
             self.race_state.setText('Win/Lose music updated. Build an ISO to test in PCSX2.')
             self.log('Win/Lose music operation completed successfully.')
             QMessageBox.information(self,'Win/Lose music updated','Processing completed. Build a modified ISO and test in PCSX2.')
@@ -2514,7 +2558,9 @@ class Window(QMainWindow):
             self.log(f'Win/Lose processing failed or stopped (exit code {code}).')
             QMessageBox.warning(self,'Win/Lose processing stopped','Review the Activity Log before retrying. Inspect the workspace if files may have changed.')
         self.race_refresh()
-        if success:
+        if success and no_changes:
+            self.race_state.setText(message)
+        elif success:
             self.race_state.setText('Win/Lose music updated. Build an ISO to test in PCSX2.')
         else:
             self.race_state.setText('Win/Lose processing did not complete; review Activity Log.')
@@ -2522,7 +2568,7 @@ class Window(QMainWindow):
     def loading_music_page(self):
         page = QWidget(); v = QVBoxLayout(page); v.setContentsMargins(0,0,0,0); v.setSpacing(9)
         title = QLabel('Loading Screen Music'); title.setObjectName('heading'); v.addWidget(title)
-        hint = QLabel('Stage MP3/WAV audio and assign it to the 18 available loading-screen slots. MP3/WAV audio must be no longer than 9.493 seconds.')
+        hint = QLabel('Stage MP3/WAV audio and assign it to the 18 available loading-screen slots. Audio files are looped during Loading Screen transitions. MP3/WAV audio must be no longer than 9.493 seconds.')
         hint.setObjectName('muted'); hint.setWordWrap(True); v.addWidget(hint)
         panels = QHBoxLayout(); panels.setSpacing(12)
         card, cv = self.panel('Staged Loading Music')
@@ -2531,11 +2577,22 @@ class Window(QMainWindow):
         self.loading_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
         self.loading_table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.loading_table.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        self.loading_table.itemSelectionChanged.connect(self.loading_staged_selection_changed)
         cv.addWidget(self.loading_table, 1)
         row = QHBoxLayout()
         add = QPushButton('Add MP3/WAV…'); add.clicked.connect(self.loading_add); row.addWidget(add)
         remove = QPushButton('Remove Selected'); remove.clicked.connect(self.loading_remove); row.addWidget(remove)
-        cv.addLayout(row); panels.addWidget(card, 1)
+        cv.addLayout(row)
+        staged_preview = QHBoxLayout()
+        self.loading_staged_preview_button = QPushButton('Preview Selected Loop')
+        self.loading_staged_preview_button.clicked.connect(self.loading_staged_preview)
+        staged_preview.addWidget(self.loading_staged_preview_button)
+        staged_stop = QPushButton('Stop Preview'); staged_stop.clicked.connect(self.loading_preview_stop)
+        staged_preview.addWidget(staged_stop); cv.addLayout(staged_preview)
+        self.loading_staged_preview_status = QLabel('')
+        self.loading_staged_preview_status.setWordWrap(True)
+        self.loading_staged_preview_status.setObjectName('muted'); cv.addWidget(self.loading_staged_preview_status)
+        panels.addWidget(card, 1)
         card, cv = self.panel('Slot Assignment')
         row = QHBoxLayout(); row.addWidget(QLabel('Method:'))
         self.loading_mode = QComboBox()
@@ -2593,6 +2650,29 @@ class Window(QMainWindow):
         v.addLayout(panels, 1)
         return page
 
+    def loading_staged_selection_changed(self):
+        if self.loading_staged_preview_source is not None:
+            self.loading_preview_stop()
+
+    def loading_staged_preview(self):
+        if self.extraction_operation_running() or self.library_busy:
+            return
+        rows = self.loading_table.selectionModel().selectedRows()
+        if len(rows) != 1:
+            self.loading_staged_preview_status.setText('Select exactly one staged track to preview.')
+            return
+        name = self.loading_table.item(rows[0].row(), 0).text()
+        source = self.root/'Loading Music'/name
+        if not source.is_file():
+            self.loading_staged_preview_status.setText('Staged audio is missing: '+name)
+            return
+        self.stop_workspace_previews()
+        self.loading_staged_preview_source = source
+        self.loading_preview_player.setLoops(4)
+        self.loading_preview_player.setSource(QUrl.fromLocalFile(str(source)))
+        self.loading_staged_preview_status.setText('Playing '+name+' four times, then stopping.')
+        self.loading_preview_player.play()
+
     def loading_preview_selection_changed(self):
         if not hasattr(self, 'loading_preview_status'):
             return
@@ -2646,6 +2726,10 @@ class Window(QMainWindow):
             return
         self.loading_preview_player.stop()
         self.loading_preview_player.setSource(QUrl())
+        self.loading_preview_player.setLoops(1)
+        self.loading_staged_preview_source = None
+        if hasattr(self, 'loading_staged_preview_status'):
+            self.loading_staged_preview_status.setText('')
         self.loading_preview_slot = None
         if self.loading_preview_temp is not None:
             self.loading_preview_temp.cleanup()
@@ -2664,10 +2748,17 @@ class Window(QMainWindow):
             self.loading_preview_seek.setRange(0, max(0, duration))
 
     def loading_preview_state_changed(self, state):
+        if self.loading_staged_preview_source is not None:
+            if state == QMediaPlayer.StoppedState and hasattr(self, 'loading_staged_preview_status'):
+                self.loading_staged_preview_status.setText('Loop preview finished.')
+            return
         if hasattr(self, 'loading_preview_play_button'):
             self.loading_preview_play_button.setText('Pause Preview' if state == QMediaPlayer.PlayingState else 'Preview / Resume Slot')
 
     def loading_preview_error(self, error, message):
+        if error != QMediaPlayer.NoError and self.loading_staged_preview_source is not None:
+            self.loading_staged_preview_status.setText('Audio playback error: '+message)
+            return
         if error != QMediaPlayer.NoError and hasattr(self, 'loading_preview_status'):
             self.loading_preview_status.setText('Audio playback error: ' + message)
 
@@ -2708,6 +2799,7 @@ class Window(QMainWindow):
         sources = [Path(p) for p in paths]
         if not sources:
             return
+        self.loading_preview_stop()
         if any(not p.is_file() or p.suffix.lower() not in ('.mp3', '.wav') for p in sources):
             QMessageBox.warning(self, 'Unsupported audio', 'Only MP3 and WAV files can be staged.')
             return
@@ -2736,6 +2828,7 @@ class Window(QMainWindow):
         if not rows: return
         if QMessageBox.question(self, 'Remove staged files', f'Remove {len(rows)} selected staged file(s)?',
             QMessageBox.Yes | QMessageBox.No, QMessageBox.No) != QMessageBox.Yes: return
+        self.loading_preview_stop()
         for row in rows:
             item = self.loading_table.item(row, 0)
             if item:
@@ -2870,7 +2963,7 @@ class Window(QMainWindow):
         self.build_capacity_label.setWordWrap(True); cv.addWidget(self.build_capacity_label)
         self.build_progress = QProgressBar(); self.build_progress.setRange(0, 7); self.build_progress.setValue(0)
         cv.addWidget(self.build_progress)
-        self.build_button = QPushButton('Compile DAT Archives & Build ISO'); self.build_button.setObjectName('primary')
+        self.build_button = QPushButton('Build ISO'); self.build_button.setObjectName('primary')
         self.build_button.setEnabled(False); self.build_button.clicked.connect(self.begin_build); cv.addWidget(self.build_button)
         v.addWidget(card)
         note = QLabel('An existing output is preserved until a new pending ISO passes the builder checks. '
@@ -3129,6 +3222,8 @@ class Window(QMainWindow):
         QMessageBox.critical(self,'ISO build failed',reason+'\nSee Activity Log for details.')
 
     def section(self, label, title):
+        if label == 'Export/Import Music':
+            return self.music_library_page()
         if label == 'About':
             return self.about_page()
         page = QWidget(); v = QVBoxLayout(page); v.setContentsMargins(0,0,0,0); v.setSpacing(13)
@@ -3139,6 +3234,156 @@ class Window(QMainWindow):
         action = QPushButton('Run ' + label); action.setEnabled(False); cv.addWidget(action)
         v.addWidget(card); v.addStretch(1)
         return page
+
+    def music_library_page(self):
+        page = QWidget(); layout = QVBoxLayout(page)
+        layout.setContentsMargins(0, 0, 0, 0); layout.setSpacing(13)
+        heading = QLabel('Export/Import Music'); heading.setObjectName('heading'); layout.addWidget(heading)
+        card, body = self.panel('Your Music Library')
+        info = QLabel('Save your staged MP3/WAV music as one portable ZIP archive. '
+                      'Exports preserve renamed filenames and categories for gameplay, Garage Shop, '
+                      'title theme, Win/Lose, and loading music, plus loading-slot selections.\n\n'
+                      'Import restores the staging library. Apply the music through the existing menus '
+                      'after loading an ISO. Extracted game files, installed RSMs, and ISOs are not included.')
+        info.setWordWrap(True); body.addWidget(info)
+        row = QHBoxLayout()
+        export = QPushButton('Export Music Library…'); export.setObjectName('primary')
+        export.clicked.connect(lambda: self.music_library_action('export')); row.addWidget(export)
+        import_button = QPushButton('Import Music Library…')
+        import_button.clicked.connect(lambda: self.music_library_action('import')); row.addWidget(import_button)
+        body.addLayout(row)
+        self.library_clear_after_export = QCheckBox('Clear exported staged music after the archive is verified')
+        self.library_clear_after_export.setChecked(False); body.addWidget(self.library_clear_after_export)
+        note = QLabel('Import merges categories without deleting other songs. For matching filenames, '
+                      'choose Replace, Skip, Replace All, or Skip All before any files are imported.')
+        note.setWordWrap(True); note.setObjectName('muted'); body.addWidget(note)
+        self.library_progress = QProgressBar(); self.library_progress.setRange(0, 100)
+        self.library_progress.setValue(0); body.addWidget(self.library_progress)
+        self.library_status = QLabel('Ready to export or import your staged music.')
+        self.library_status.setWordWrap(True); body.addWidget(self.library_status)
+        layout.addWidget(card); layout.addStretch(1)
+        return page
+
+    def music_library_action(self, action):
+        if self.library_busy or self.extraction_operation_running():
+            QMessageBox.information(self, 'Operation in progress', 'Wait for the current operation to finish.'); return
+        if action == 'export':
+            filename, _ = QFileDialog.getSaveFileName(self, 'Export Music Library',
+                str(self.root/'MC3_Custom_Music_Library.zip'), 'Music Library (*.zip)')
+            if filename and not filename.lower().endswith('.zip'):
+                filename += '.zip'
+                if Path(filename).exists() and QMessageBox.question(self, 'Replace export',
+                    'Replace the existing export archive?', QMessageBox.Yes | QMessageBox.No,
+                    QMessageBox.No) != QMessageBox.Yes:
+                    return
+        else:
+            filename, _ = QFileDialog.getOpenFileName(self, 'Import Music Library', str(self.root), 'Music Library (*.zip)')
+        if not filename:
+            return
+        if action == 'import' and QMessageBox.question(self, 'Import Music Library',
+            'Restore staged audio and loading selections from this archive?\n\n'+filename+
+            '\n\nYou will choose how to handle duplicate filenames. Other staged songs and all game files are kept.',
+            QMessageBox.Yes | QMessageBox.No, QMessageBox.No) != QMessageBox.Yes:
+            return
+        if action == 'export' and self.library_clear_after_export.isChecked() and QMessageBox.question(
+            self, 'Export and clear staged music', 'Export to this archive, verify it, then remove the exported '
+            'MP3/WAV files from the staging folders?\n\n'+filename+'\n\nGame files are kept.',
+            QMessageBox.Yes | QMessageBox.No, QMessageBox.No) != QMessageBox.Yes:
+            return
+        state = {'loading_mode': self.loading_mode.currentData(),
+                 'loading_slots': [self.loading_slot_table.cellWidget(i, 1).currentData() or '' for i in range(18)]}
+        expected_paths = []
+        for row in range(self.custom_table.rowCount()):
+            item = self.custom_table.item(row, 0)
+            if item and item.data(Qt.UserRole):
+                expected_paths.append(Path(item.data(Qt.UserRole)).relative_to(self.root).as_posix())
+        for kind, table in self.race_tables.items():
+            for row in range(table.rowCount()):
+                expected_paths.append(self.race_source_dir(kind).relative_to(self.root).as_posix()+'/'+table.item(row, 0).text())
+        for row in range(self.loading_table.rowCount()):
+            expected_paths.append('Loading Music/'+self.loading_table.item(row, 0).text())
+        expected_paths.extend(path.relative_to(self.root).as_posix() for path in self.title_sources())
+        state['expected_paths'] = expected_paths
+        self.music_library_start_worker('review' if action == 'import' else action, filename, state)
+
+    def music_library_start_worker(self, action, filename, state=None, decisions=None):
+        self.stop_workspace_previews()
+        self.library_busy = True; self.stack.setEnabled(False)
+        for button in self.nav: button.setEnabled(False)
+        self.library_progress.setRange(0, 0)
+        self.library_status.setText(('Exporting' if action == 'export' else 'Importing')+' music library…')
+        self.log('Music library '+action+' started: '+filename)
+        worker = MusicLibraryWorker(action, self.root, Path(filename), state, False, self,
+                                    decisions=decisions, clear=self.library_clear_after_export.isChecked())
+        self.library_worker = worker
+        worker.progress.connect(lambda done, total: self.library_status.setText(f'Processing music: {done}/{total} files'))
+        worker.completed.connect(lambda result: self.music_library_finished(action, result))
+        worker.failed.connect(self.music_library_failed)
+        worker.finished.connect(worker.deleteLater)
+        worker.finished.connect(lambda: setattr(self, 'library_worker', None) if self.library_worker is worker else None)
+        worker.start()
+
+    def music_library_unlock(self):
+        self.library_busy = False; self.stack.setEnabled(True)
+        for button in self.nav: button.setEnabled(True)
+        self.library_progress.setRange(0, 100)
+
+    def music_library_finished(self, action, result):
+        self.music_library_unlock(); self.library_progress.setValue(100)
+        if action == 'review':
+            decisions, all_choice = {}, None
+            for duplicate in result['duplicates']:
+                choice = all_choice
+                if choice is None:
+                    dialog = QMessageBox(self)
+                    dialog.setWindowTitle('Duplicate staged music')
+                    dialog.setText('This filename already exists:\n'+duplicate['path']+'\n\n'+
+                                   ('The audio contents are identical.' if duplicate['identical'] else 'The audio contents differ.'))
+                    dialog.setStandardButtons(QMessageBox.Yes | QMessageBox.No | QMessageBox.YesToAll |
+                                              QMessageBox.NoToAll | QMessageBox.Cancel)
+                    for button, text in ((QMessageBox.Yes, 'Replace'), (QMessageBox.No, 'Skip'),
+                                         (QMessageBox.YesToAll, 'Replace All'), (QMessageBox.NoToAll, 'Skip All')):
+                        dialog.button(button).setText(text)
+                    dialog.setDefaultButton(QMessageBox.No)
+                    answer = dialog.exec()
+                    if answer == QMessageBox.Cancel:
+                        self.library_status.setText('Import canceled. No files were changed.')
+                        self.library_progress.setValue(0); return
+                    choice = 'replace' if answer in (QMessageBox.Yes, QMessageBox.YesToAll) else 'skip'
+                    if answer in (QMessageBox.YesToAll, QMessageBox.NoToAll):
+                        all_choice = choice
+                decisions[duplicate['path'].casefold()] = choice
+            self.music_library_start_worker('import', result['archive'], decisions=decisions)
+            return
+        if action == 'export':
+            message = f'Exported and verified {result["files"]} music file(s).\n{result["archive"]}'
+            counts = result.get('category_counts', {})
+            message += (f'\nLoading Music: {counts.get("Loading Music", 0)} file(s). '
+                        f'Title theme: {counts.get("Custom Music/3_Theme Song", 0)} file(s).')
+            if result['cleared']:
+                self.custom_refresh(); self.race_refresh(); self.title_refresh(); self.loading_refresh()
+                message += f'\nCleared {result["cleared"]} exported staged file(s).'
+            if result['clear_error']:
+                message += '\n'+result['clear_error']
+        else:
+            self.custom_refresh(); self.race_refresh(); self.title_refresh(); self.loading_refresh()
+            state = result['session']
+            self.loading_mode.setCurrentIndex(max(0, self.loading_mode.findData(state['loading_mode'])))
+            for i, name in enumerate(state['loading_slots']):
+                combo = self.loading_slot_table.cellWidget(i, 1)
+                index = next((j for j in range(combo.count()) if str(combo.itemData(j)).casefold() == name.casefold()), 0)
+                combo.setCurrentIndex(index)
+            message = (f'Imported {result["imported"]} file(s). '
+                       f'{result["identical"]} identical; {result["skipped"]} conflicting file(s) kept.\n'
+                       'Your library is staged. Use the music menus to apply it to an extracted ISO.')
+        self.library_status.setText(message); self.log(message)
+        QMessageBox.information(self, 'Music library '+('exported' if action == 'export' else 'imported'), message)
+
+    def music_library_failed(self, error):
+        self.music_library_unlock(); self.library_progress.setValue(0)
+        self.library_status.setText('Music library operation failed: '+error)
+        self.log('Music library operation failed: '+error)
+        QMessageBox.critical(self, 'Music library operation failed', error)
 
     def about_page(self):
         page = QWidget(); layout = QVBoxLayout(page)
@@ -3354,6 +3599,9 @@ class Window(QMainWindow):
             self.validation.setText('Profile integrity: Verification could not start')
     
     def closeEvent(self, event):
+        if self.library_busy:
+            QMessageBox.information(self, 'Music library operation in progress', 'Wait for export/import to finish.')
+            event.ignore(); return
         if self.loading_busy:
             QMessageBox.information(self, 'Loading-screen processing in progress', 'Wait for loading-screen music processing to finish.')
             event.ignore(); return
