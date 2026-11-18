@@ -11,7 +11,7 @@ import tempfile
 import wave
 import uuid
 from workspace_cleanup import cleanup_plan
-from PySide6.QtCore import Qt, QProcess, QUrl, QThread, Signal
+from PySide6.QtCore import Qt, QProcess, QUrl, QThread, Signal, QTimer
 from music_library import export_library, import_library, inspect_duplicates
 from frontend_playlist import resolve_frontend_rsm, FrontendPlaylistError
 from race_playlist import read_display_race_tracks
@@ -333,6 +333,8 @@ class Window(QMainWindow):
     def __init__(self):
         super().__init__()
         self.root = ROOT
+        self.capacity_process = None
+        self.capacity_pending = False
         self.setWindowTitle('Midnight Club 3: Dub Edition Music Tools')
         self.library_busy = False
         self.library_worker = None
@@ -478,6 +480,11 @@ class Window(QMainWindow):
         self.refresh_workspace()
         self.start_auto_validation()
         self.loading_refresh() 
+        self.capacity_timer = QTimer(self)
+        self.capacity_timer.setInterval(1500)
+        self.capacity_timer.timeout.connect(self.capacity_tick)
+        self.capacity_timer.start()
+        self.request_capacity_estimate()
 
     def log(self, message):
         self.log_box.append(f'[{datetime.now():%H:%M:%S}] {message}')
@@ -499,6 +506,16 @@ class Window(QMainWindow):
         self.source.setTextInteractionFlags(Qt.TextSelectableByMouse); self.source.setMinimumHeight(48)
         cv.addWidget(self.source)
         self.validation = QLabel('Profile validation: Not run', card); self.validation.hide()
+        self.workspace_capacity_status = QLabel('Workspace capacity: available after ISO verification.')
+        self.workspace_capacity_status.setWordWrap(True); cv.addWidget(self.workspace_capacity_status)
+        self.workspace_capacity_bar = QProgressBar()
+        self.workspace_capacity_bar.setRange(0, 1000)
+        self.workspace_capacity_bar.setValue(0)
+        self.workspace_capacity_bar.setFormat('Not estimated')
+        cv.addWidget(self.workspace_capacity_bar)
+        self.workspace_capacity_detail = QLabel('Processed workspace only. Staged audio is excluded. Final build validation is still required.')
+        self.workspace_capacity_detail.setObjectName('muted'); self.workspace_capacity_detail.setWordWrap(True)
+        cv.addWidget(self.workspace_capacity_detail)
         v.addWidget(card)
         overview = QHBoxLayout(); overview.setSpacing(12)
         card, cv = self.panel('Total Gameplay & Garage Songs')
@@ -552,6 +569,7 @@ class Window(QMainWindow):
         return scroll
 
     def update_dashboard_metrics(self):
+        self.request_capacity_estimate()
         if not hasattr(self, 'dashboard_song_total'):
             return
         ready = self.profile_verified and self.dashboard_catalog_state == 'ready'
@@ -599,6 +617,98 @@ class Window(QMainWindow):
         except (FrontendPlaylistError, OSError) as exc:
             self.dashboard_title_theme.setText('Unavailable')
             self.dashboard_title_theme.setToolTip(str(exc))
+
+    def request_capacity_estimate(self):
+        self.capacity_pending = True
+        if self.capacity_process is not None:
+            self.capacity_process.setProperty('superseded', True)
+            self.capacity_process.kill()
+        if hasattr(self, 'workspace_capacity_status'):
+            self.workspace_capacity_status.setText('Workspace capacity: updating…' if self.profile_verified
+                                                   else 'Workspace capacity: available after ISO verification.')
+            self.workspace_capacity_bar.setRange(0, 1000)
+            self.workspace_capacity_bar.setValue(0)
+            self.workspace_capacity_bar.setFormat('Updating…' if self.profile_verified else 'Not estimated')
+            self.workspace_capacity_bar.setStyleSheet('')
+            self.workspace_capacity_detail.setText('Processed workspace only. Staged audio is excluded. Final build validation is still required.')
+
+    def capacity_tick(self):
+        busy = any(getattr(self, name, False) for name in (
+            'extraction_busy', 'build_busy', 'custom_busy', 'title_busy',
+            'race_busy', 'loading_busy', 'soundtrack_busy'))
+        if busy or not self.profile_verified:
+            if busy and not self.capacity_pending and self.capacity_process is None:
+                self.request_capacity_estimate()
+            if self.capacity_process is not None:
+                self.capacity_pending = True
+                self.capacity_process.setProperty('superseded', True)
+                self.capacity_process.kill()
+            return
+        if not self.capacity_pending or self.capacity_process is not None:
+            return
+        self.capacity_pending = False
+        helper = self.root/'supporting_tools/workspace_capacity.py'
+        if not helper.is_file():
+            self.workspace_capacity_status.setText('Workspace capacity: estimator unavailable.')
+            return
+        process = QProcess(self)
+        self.capacity_process = process
+        root = str(self.root.resolve())
+        process.setWorkingDirectory(root)
+        process.setProgram(sys.executable)
+        process.setArguments(['-u', str(helper), '--root', root, '--cache',
+                              str(self.root/'support_logs/workspace_capacity_cache.json')])
+        process.setProcessChannelMode(QProcess.MergedChannels)
+        process.finished.connect(lambda code, status: self.capacity_finished(process, root, code, status))
+        process.errorOccurred.connect(lambda error: self.capacity_start_error(process, error))
+        self.workspace_capacity_status.setText('Calculating workspace capacity…')
+        self.workspace_capacity_bar.setRange(0, 0)
+        self.workspace_capacity_bar.setFormat('Calculating…')
+        process.start()
+
+    def capacity_start_error(self, process, error):
+        if error == QProcess.FailedToStart:
+            self.capacity_finished(process, str(self.root.resolve()), 1, QProcess.CrashExit)
+
+    def capacity_finished(self, process, root, code, status):
+        if self.capacity_process is not process:
+            return
+        self.capacity_process = None
+        output = bytes(process.readAllStandardOutput()).decode('utf-8', errors='replace')
+        cancelled = process.property('superseded')
+        process.deleteLater()
+        if cancelled or root != str(self.root.resolve()) or not self.profile_verified:
+            return
+        self.workspace_capacity_bar.setRange(0, 1000)
+        try:
+            if code != 0 or status != QProcess.NormalExit:
+                raise ValueError(output.strip() or 'Estimator could not run')
+            marker = 'MC3_CAPACITY_JSON:'
+            result = json.loads(next(line[len(marker):] for line in output.splitlines() if line.startswith(marker)))
+            used, budget = result['used_bytes'], result['capacity_bytes']
+            if type(used) is not int or type(budget) is not int or used < 0 or budget <= 0:
+                raise ValueError('Invalid capacity estimate')
+            self.workspace_capacity_bar.setValue(min(1000, round(used / budget * 1000)))
+            self.workspace_capacity_bar.setFormat(f'{used / budget:.1%} projected use')
+            over = result['over_capacity_bytes']
+            risks = result['record_risks']
+            detail = (f'Over capacity by {over / 1048576:,.2f} MiB. Shorten or remove music.' if over
+                      else f'{result["remaining_bytes"] / 1048576:,.2f} MiB remaining.')
+            if not over and used / budget >= 0.9:
+                detail += ' Approaching capacity.'
+            if risks:
+                detail += ' ' + ' '.join(risks)
+            self.workspace_capacity_status.setText(
+                f'Projected use: {used / 1048576:,.2f} / {budget / 1048576:,.2f} MiB — {detail}')
+            self.workspace_capacity_bar.setStyleSheet('QProgressBar::chunk { background: #d94150; }' if over or risks
+                else 'QProgressBar::chunk { background: #d99f41; }' if used / budget >= 0.9 else '')
+            self.workspace_capacity_detail.setText(
+                'Processed workspace only; staged audio excluded. Estimate — final build validation is required.')
+        except (ValueError, KeyError, TypeError, StopIteration) as exc:
+            self.workspace_capacity_bar.setValue(0)
+            self.workspace_capacity_bar.setFormat('Unavailable')
+            self.workspace_capacity_status.setText('Workspace capacity: estimate unavailable. See Activity Log.')
+            self.log('Capacity estimate unavailable: ' + str(exc))
 
     def extraction_page(self):
         page = QWidget(); v = QVBoxLayout(page); v.setContentsMargins(0,0,0,0); v.setSpacing(13)
@@ -679,6 +789,11 @@ class Window(QMainWindow):
         return True
 
     def stop_workspace_previews(self):
+        if self.capacity_process is not None:
+            self.capacity_pending = True
+            self.capacity_process.setProperty('superseded', True)
+            self.capacity_process.kill()
+            self.capacity_process.waitForFinished(1500)
         self.gameplay_preview_stop()
         self.custom_preview_stop()
         self.race_preview_stop()
@@ -1215,6 +1330,7 @@ class Window(QMainWindow):
         self.start_soundtrack_process(self.root/'supporting_tools'/'manage_gameplay_soundtrack.py', args, 'check')
 
     def soundtrack_finished(self, code, status):
+        self.request_capacity_estimate()
         self.soundtrack_output()
         stage = self.soundtrack_stage
         output = self.soundtrack_buffer
@@ -1812,6 +1928,7 @@ class Window(QMainWindow):
             self.custom_fail('Could not start the custom music processing utility: '+detail)
 
     def custom_fail(self,message):
+        self.request_capacity_estimate()
         if not self.custom_busy: return
         self.custom_busy = False; self.custom_run.setEnabled(True)
         self.custom_state.setText(message.splitlines()[0])
@@ -2073,6 +2190,7 @@ class Window(QMainWindow):
                 if line.strip(): self.log(line.rstrip())
 
     def title_finished(self,code,status):
+        self.request_capacity_estimate()
         if not self.title_busy: return
         self.title_read()
         self.title_busy = False; self.title_run.setEnabled(True)
@@ -2922,6 +3040,7 @@ class Window(QMainWindow):
     def loading_finished(self, code, status):
         self.loading_output()
         self.loading_busy = False; self.loading_run.setEnabled(True)
+        self.request_capacity_estimate()
         success = status == QProcess.NormalExit and code == 0
         self.loading_progress.setRange(0, 100)
         self.loading_progress.setValue(100 if success else 0)
@@ -3390,12 +3509,9 @@ class Window(QMainWindow):
         layout.setContentsMargins(0, 0, 0, 0); layout.setSpacing(13)
         heading = QLabel('About'); heading.setObjectName('heading'); layout.addWidget(heading)
         card, body = self.panel('MC3 Ultimate Music Tools')
-        owner = QLabel('Project owner and maintainer: LowKey60Hz')
+        owner = QLabel('Author: LowKey60Hz')
         owner.setStyleSheet('font-size: 16px; font-weight: 600;'); body.addWidget(owner)
-        description = QLabel('Custom application code, GUI, and project-specific music workflows by LowKey60Hz. '
-                             'Third-party tools and libraries remain credited to their respective authors.')
-        description.setWordWrap(True); body.addWidget(description)
-        quote = QLabel('“I just wanted to play MC3 with my own tunes :)” — LowKey60Hz')
+        quote = QLabel('“I just wanted to paly my own music in the game...” — LowKey60Hz')
         quote.setWordWrap(True); quote.setStyleSheet('font-style: italic; color: #ff6472; padding: 8px 0;')
         body.addWidget(quote); layout.addWidget(card)
         card, body = self.panel('Third-Party Credits')
@@ -3599,6 +3715,10 @@ class Window(QMainWindow):
             self.validation.setText('Profile integrity: Verification could not start')
     
     def closeEvent(self, event):
+        if self.capacity_process is not None:
+            self.capacity_pending = True
+            self.capacity_process.setProperty('superseded', True)
+            self.capacity_process.kill()
         if self.library_busy:
             QMessageBox.information(self, 'Music library operation in progress', 'Wait for export/import to finish.')
             event.ignore(); return

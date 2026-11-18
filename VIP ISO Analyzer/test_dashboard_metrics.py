@@ -5,7 +5,8 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
-from unittest.mock import patch
+import json
+from unittest.mock import patch, Mock
 
 PROJECT = Path(__file__).resolve().parent.parent/'UI Custom Gameplay Music Tools'
 sys.path.insert(0, str(PROJECT/'gui'))
@@ -14,6 +15,77 @@ from PySide6.QtWidgets import QPushButton
 
 
 class DashboardTests(unittest.TestCase):
+    def test_capacity_real_background_process_and_cache(self):
+        import shutil
+        from PySide6.QtCore import QEventLoop, QTimer
+        tools=self.root/'supporting_tools'
+        tools.mkdir(exist_ok=True)
+        for source in (PROJECT/'supporting_tools').glob('*.py'):
+            shutil.copy2(source,tools/source.name)
+        workspace=self.root/'ISO_FILES'; workspace.mkdir(exist_ok=True)
+        (workspace/'MC3_PROFILE.txt').write_text('retail')
+        (workspace/'MC3_SOURCE_CLASS.txt').write_text('VERIFIED_RETAIL_REFERENCE')
+        self.window.capacity_timer.stop()
+        self.window.capacity_pending=True
+        self.window.capacity_tick()
+        process=self.window.capacity_process
+        self.assertIsNotNone(process)
+        loop=QEventLoop()
+        process.finished.connect(loop.quit)
+        QTimer.singleShot(10000,loop.quit)
+        loop.exec()
+        self.assertIsNone(self.window.capacity_process)
+        self.assertIn('Projected use:',self.window.workspace_capacity_status.text())
+        self.assertTrue((self.root/'support_logs/workspace_capacity_cache.json').is_file())
+
+    def show_capacity(self, used, budget=100*1048576, *, risks=None, code=0, cancelled=False):
+        report={'used_bytes':used,'capacity_bytes':budget,'over_capacity_bytes':max(0,used-budget),
+                'remaining_bytes':max(0,budget-used),'assets_bytes':used//2,'streams_bytes':used-used//2,
+                'record_risks':risks or []}
+        process=Mock()
+        process.readAllStandardOutput.return_value=('MC3_CAPACITY_JSON:'+json.dumps(report)).encode()
+        process.property.return_value=cancelled
+        self.window.capacity_process=process
+        self.window.capacity_finished(process,str(self.root.resolve()),code,gui.QProcess.NormalExit)
+        return process
+
+    def test_capacity_meter_remaining_overage_and_near_limit(self):
+        self.show_capacity(80*1048576)
+        self.assertIn('20.00 MiB remaining',self.window.workspace_capacity_status.text())
+        self.assertEqual(self.window.workspace_capacity_bar.value(),800)
+        self.assertIn('staged audio excluded',self.window.workspace_capacity_detail.text())
+        self.show_capacity(95*1048576)
+        self.assertIn('Approaching capacity',self.window.workspace_capacity_status.text())
+        self.show_capacity(110*1048576)
+        self.assertIn('Over capacity by 10.00 MiB',self.window.workspace_capacity_status.text())
+        self.assertEqual(self.window.workspace_capacity_bar.value(),1000)
+
+    def test_capacity_record_warning_and_error_are_not_a_fit_claim(self):
+        self.show_capacity(30*1048576,risks=['ASSETS record limit exceeded.'])
+        self.assertIn('record limit exceeded',self.window.workspace_capacity_status.text())
+        self.show_capacity(30*1048576,code=1)
+        self.assertIn('unavailable',self.window.workspace_capacity_status.text())
+        self.assertEqual(self.window.workspace_capacity_bar.format(),'Unavailable')
+
+    def test_stale_capacity_result_does_not_replace_current_status(self):
+        self.window.workspace_capacity_status.setText('Waiting for new workspace')
+        self.show_capacity(30*1048576,cancelled=True)
+        self.assertEqual(self.window.workspace_capacity_status.text(),'Waiting for new workspace')
+
+    def test_capacity_worker_is_cancelled_during_processing_and_deferred(self):
+        process=Mock()
+        self.window.capacity_process=process
+        self.window.capacity_pending=False
+        self.window.soundtrack_busy=True
+        try:
+            self.window.capacity_tick()
+            process.kill.assert_called_once()
+            process.setProperty.assert_called_with('superseded',True)
+            self.assertTrue(self.window.capacity_pending)
+        finally:
+            self.window.capacity_process=None
+            self.window.soundtrack_busy=False
+
     @classmethod
     def setUpClass(cls):
         cls.app = gui.QApplication.instance() or gui.QApplication([])

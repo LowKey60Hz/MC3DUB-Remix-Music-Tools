@@ -1,7 +1,7 @@
 # Keep python.exe for child audio tools, but hide its console window.
 param([switch]$ValidateOnly)
 $ErrorActionPreference = 'Stop'
-$projectRoot = $PSScriptRoot
+$projectRoot = Split-Path -Parent $PSScriptRoot
 $guiPython = Join-Path $projectRoot '.venv\Scripts\python.exe'
 $guiMain = Join-Path $projectRoot 'gui\main.py'
 try {
@@ -9,7 +9,7 @@ try {
         throw 'Python environment not found. Run Install_MC3_GUI_Dependencies.ps1 first.'
     }
     if (-not (Test-Path -LiteralPath $guiMain -PathType Leaf)) {
-        throw 'Cannot find gui\main.py. Keep the launcher beside gui and supporting_tools.'
+        throw 'Cannot find gui\main.py. Keep Launch_No_Shell.ps1 inside supporting_tools, beside the gui folder.'
     }
     if ($ValidateOnly) {
         Write-Output 'GUI launcher paths verified.'

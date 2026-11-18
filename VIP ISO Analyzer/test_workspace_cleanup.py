@@ -39,8 +39,8 @@ class CleanupTests(unittest.TestCase):
             root, iso = fixture(directory)
             # Exercise the real launcher with process creation intercepted, so no
             # actual GUI is started and no user's workspace is modified.
-            launcher = root/'Launch_MC3_GUI.ps1'
-            shutil_source = GUI.parent/'Launch_MC3_GUI.ps1'
+            launcher = root/'supporting_tools/Launch_No_Shell.ps1'
+            shutil_source = GUI.parent/'supporting_tools/Launch_No_Shell.ps1'
             launcher.write_bytes(shutil_source.read_bytes())
             (root/'.venv/Scripts').mkdir(parents=True)
             (root/'.venv/Scripts/python.exe').touch()

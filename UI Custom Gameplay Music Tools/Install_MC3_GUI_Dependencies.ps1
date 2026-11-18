@@ -4,7 +4,7 @@ $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location -LiteralPath $root
 $venvPython = Join-Path $root '.venv\Scripts\python.exe'
-$launcher = Join-Path $root 'Launch_MC3_GUI.bat'
+$launcher = Join-Path $root 'Launch.bat'
 
 function Fail([string]$message) { throw $message }
 function Run-Checked([string]$exe, [string[]]$arguments) {
@@ -77,13 +77,13 @@ foreach ($relative in $required) {
 }
 
 # Use the bundled launchers instead of regenerating a console-visible batch file.
-$hiddenLauncher = Join-Path $root 'Launch_MC3_GUI.ps1'
+$hiddenLauncher = Join-Path $root 'supporting_tools\Launch_No_Shell.ps1'
 if (-not (Test-Path -LiteralPath $launcher) -or -not (Test-Path -LiteralPath $hiddenLauncher)) {
-    Fail 'Launch_MC3_GUI.bat or Launch_MC3_GUI.ps1 is missing. Restore both from the project distribution.'
+    Fail 'Launch.bat or supporting_tools\Launch_No_Shell.ps1 is missing. Restore both from the project distribution.'
 }
 Write-Host "Launcher ready: $launcher" -ForegroundColor Green
 if ($missing.Count -gt 0) {
     Write-Warning 'Setup completed, but some bundled supporting files are missing. Copy them from the complete project distribution before using audio conversion.'
 } else {
-    Write-Host 'Setup complete. Double-click Launch_MC3_GUI.bat to start the GUI.' -ForegroundColor Green
+    Write-Host 'Setup complete. Double-click Launch.bat to start the GUI.' -ForegroundColor Green
 }

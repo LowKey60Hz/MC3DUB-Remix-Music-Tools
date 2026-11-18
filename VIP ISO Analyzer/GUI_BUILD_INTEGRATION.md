@@ -26,7 +26,7 @@ SHA-256: `3cef6559a5b2e8797b1eed4ed774f3c0ee4afec9b159f1c4defe4d835f0b34e3`.
 
 ## Using it
 
-Restart the GUI with `UI Custom Gameplay Music Tools/Launch_MC3_GUI.bat`. Wait for workspace verification, open **Build ISO**, and choose **Compile DAT Archives & Build ISO**. Review the normal build confirmation. Current v1.1-A builds use six steps:
+Restart the GUI with `UI Custom Gameplay Music Tools/Launch.bat`. Wait for workspace verification, open **Build ISO**, and choose **Compile DAT Archives & Build ISO**. Review the normal build confirmation. Current v1.1-A builds use six steps:
 
 1. Validate recorded source fingerprint.
 2. Compile and independently verify ASSETS via the dedicated v1.1-A compiler.
