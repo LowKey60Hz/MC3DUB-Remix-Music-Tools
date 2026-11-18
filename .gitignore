@@ -274,3 +274,6 @@ __pycache__/
 *.iso.partial
 *.iso.building.tmp
 
+
+# Analyzer research is kept locally outside the tracked project.
+/VIP ISO Analyzer/
