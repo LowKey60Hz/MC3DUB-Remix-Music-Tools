@@ -443,7 +443,7 @@ class Window(QMainWindow):
         sidebar = QFrame(); sidebar.setObjectName('sidebar'); sidebar.setFixedWidth(202)
         side = QVBoxLayout(sidebar); side.setContentsMargins(10, 17, 10, 12); side.setSpacing(5)
         name = QLabel('Music Tools'); name.setObjectName('accent'); side.addWidget(name)
-        subtitle = QLabel('v1.0'); subtitle.setObjectName('muted'); side.addWidget(subtitle)
+        subtitle = QLabel('v1.1'); subtitle.setObjectName('muted'); side.addWidget(subtitle)
         side.addSpacing(18)
         self.nav = []
         for i, (label, _) in enumerate(SECTIONS):
@@ -3363,7 +3363,7 @@ class Window(QMainWindow):
                       'Exports preserve renamed filenames and categories for gameplay, Garage Shop, '
                       'title theme, Win/Lose, and loading music, plus loading-slot selections.\n\n'
                       'Import restores the staging library. Apply the music through the existing menus '
-                      'after loading an ISO. Extracted game files, installed RSMs, and ISOs are not included.')
+                      'after loading an ISO.')
         info.setWordWrap(True); body.addWidget(info)
         row = QHBoxLayout()
         export = QPushButton('Export Music Library…'); export.setObjectName('primary')
@@ -3372,6 +3372,20 @@ class Window(QMainWindow):
         import_button.clicked.connect(lambda: self.music_library_action('import')); row.addWidget(import_button)
         body.addLayout(row)
         self.library_clear_after_export = QCheckBox('Clear exported staged music after the archive is verified')
+        checkmark = (Path(__file__).parent/'icons/checkmark.svg').as_posix()
+        self.library_clear_after_export.setStyleSheet(f'''
+            QCheckBox {{ spacing: 8px; }}
+            QCheckBox::indicator {{
+                width: 18px; height: 18px;
+                border: 2px solid #452127; border-radius: 3px;
+                background: #15171b;
+            }}
+            QCheckBox::indicator:hover {{ border-color: #d94150; }}
+            QCheckBox::indicator:checked {{
+                background: #452127;
+                image: url("{checkmark}");
+            }}
+        ''')
         self.library_clear_after_export.setChecked(False); body.addWidget(self.library_clear_after_export)
         note = QLabel('Import merges categories without deleting other songs. For matching filenames, '
                       'choose Replace, Skip, Replace All, or Skip All before any files are imported.')

@@ -69,7 +69,7 @@ $checkCode | & $venvPython -
 if ($LASTEXITCODE -ne 0) { Fail 'Python import verification failed.' }
 
 Write-Host 'Checking bundled supporting tools...'
-$required = @('supporting_tools\ps2str.exe','supporting_tools\encvag.dll','supporting_tools\MFAudio.exe')
+$required = @('supporting_tools\audio_processor.py','supporting_tools\rstm_build.py','supporting_tools\ps_adpcm_encoder.py')
 $missing = @()
 foreach ($relative in $required) {
     if (Test-Path -LiteralPath (Join-Path $root $relative)) { Write-Host "  OK: $relative" }

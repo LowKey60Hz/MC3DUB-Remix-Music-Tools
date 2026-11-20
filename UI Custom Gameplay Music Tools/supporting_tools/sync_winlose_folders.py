@@ -8,6 +8,9 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
+from contextlib import nullcontext
+import add_gameplay_songs as audio_batch
 from remove_race_soundtracks import PLACEHOLDERS, slot_entries, digest as rsm_digest
 
 CONFIG = {
@@ -39,24 +42,69 @@ def playlist_data(path, prefix):
     return raw, entries
 
 
-def encode(song, output, tools, scratch):
+def encode(song, output, tools, scratch, log=None):
     wav = scratch / 'source.wav'
     wav.unlink(missing_ok=True)
     output.unlink(missing_ok=True)
+    kwargs = {'stdout': log, 'stderr': subprocess.STDOUT} if log is not None else {}
     cmd = [sys.executable, str(tools / 'audio_processor.py'), str(song), '-o', str(wav)]
-    if subprocess.run(cmd).returncode or not wav.is_file():
+    if subprocess.run(cmd, **kwargs).returncode or not wav.is_file():
         raise RuntimeError(f'Python WAV conversion failed for {song.name}')
     cmd = [sys.executable, str(tools / 'rstm_build.py'), str(wav), '-o', str(output)]
-    if subprocess.run(cmd, cwd=tools).returncode or not output.is_file() or output.stat().st_size < 2048:
+    if subprocess.run(cmd, cwd=tools, **kwargs).returncode or not output.is_file() or output.stat().st_size < 2048:
         raise RuntimeError(f'RSM encoding failed for {song.name}')
     wav.unlink(missing_ok=True)
+
+
+def convert_track(job, folder, tools, index, total, stopped, capture):
+    song, stem, _, kind = job
+    folder.mkdir()
+    output = folder/'output.rsm'
+    log = folder/'conversion.log' if capture else None
+    if stopped.is_set():
+        return output, f'Conversion stopped for {song.name} after another track failed.', None
+    started = time.perf_counter()
+    print(f'[{index}/{total}] Converting {kind}: {song.name} -> {stem}.rsm', flush=True)
+    try:
+        with (log.open('w', encoding='utf-8') if log else nullcontext(None)) as stream:
+            encode(song, output, tools, folder, stream)
+    except (RuntimeError, OSError) as exc:
+        stopped.set()
+        return output, str(exc), log
+    print(f'[{index}/{total}] Converted {kind}: {song.name} in {time.perf_counter()-started:.1f}s', flush=True)
+    return output, None, log
+
+
+def convert_plan(staged_plan, scratch, tools, serial=False):
+    """Prepare every Win/Lose RSM before the existing installation transaction."""
+    jobs = [(song, stem, digest, kind) for kind, plan in staged_plan.items()
+            for song, stem, digest in plan]
+    started = time.perf_counter()
+    index = 0
+    previous_width = None
+    while index < len(jobs):
+        width = audio_batch.batch_width(jobs[index:], serial=serial)
+        if width != previous_width:
+            print(f'[INFO] Converting up to {width} Win/Lose song(s) at a time (adaptive CPU/RAM budget).', flush=True)
+            previous_width = width
+        batch = jobs[index:index+width]
+        results = audio_batch.convert_batch(batch, scratch, tools, index+1, len(jobs), converter=convert_track)
+        for job, (output, error, _) in zip(batch, results):
+            if error:
+                raise RuntimeError(error)
+            output.replace(scratch/(job[1]+'.rsm'))
+            completed_folder = output.parent.resolve()
+            completed_folder.relative_to(scratch.resolve())
+            shutil.rmtree(completed_folder)
+        index += len(batch)
+    print(f'[INFO] Win/Lose conversion batch completed in {time.perf_counter()-started:.1f}s.', flush=True)
 
 
 def main():
     root = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else Path(__file__).resolve().parent.parent
     mode = sys.argv[2].lower() if len(sys.argv) > 2 else ''
     if mode not in ('replace', 'add'):
-        return fail('Usage: sync_winlose_folders.py ROOT replace|add')
+        return fail('Usage: sync_winlose_folders.py ROOT replace|add [--serial]')
     tools = root / 'supporting_tools'
     music = root / 'STREAMS' / 'Music' / 'Win_Lose'
     playlist_root = root / 'ASSETS' / 'tune' / 'audio' / 'playlist'
@@ -98,8 +146,8 @@ def main():
         return 0
     if not (tools / 'audio_processor.py').is_file() or not (tools / 'rstm_build.py').is_file():
         return fail('Missing supporting_tools/audio_processor.py or rstm_build.py.')
-    if not ((tools / 'ps2str.exe').is_file() or (tools / 'MFAudio.exe').is_file()):
-        return fail('Missing PS2 audio encoder.')
+    if not (tools / 'ps_adpcm_encoder.py').is_file():
+        return fail('Missing supporting_tools/ps_adpcm_encoder.py.')
     # A small history prevents re-adding the same source audio on later Add runs.
     history_path = root / 'support_logs' / 'winlose_add_history.json'
     try:
@@ -187,10 +235,7 @@ def main():
     with tempfile.TemporaryDirectory(prefix='mc3_winlose_') as temp:
         scratch = Path(temp)
         try:
-            for kind, plan in staged_plan.items():
-                for song, stem, _ in plan:
-                    print(f'[CONVERT] {kind}: {song.name} -> {stem}.rsm')
-                    encode(song, scratch / (stem + '.rsm'), tools, scratch)
+            convert_plan(staged_plan, scratch, tools, serial='--serial' in sys.argv[3:])
         except (RuntimeError, OSError) as exc:
             return fail(f'{exc}; existing game files unchanged.')
         # Rollback copies are temporary and deleted on success; no permanent backups.

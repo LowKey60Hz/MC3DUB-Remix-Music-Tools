@@ -277,3 +277,6 @@ __pycache__/
 
 # Analyzer research is kept locally outside the tracked project.
 /VIP ISO Analyzer/
+
+# Encoder research outputs contain local audio; source/tests remain trackable.
+/Encoder Research/artifacts/

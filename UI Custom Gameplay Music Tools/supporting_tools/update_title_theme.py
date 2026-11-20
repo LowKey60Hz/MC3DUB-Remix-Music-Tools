@@ -119,8 +119,8 @@ def main():
     tools = root / 'supporting_tools'
     processor = tools / 'audio_processor.py'
     builder = tools / 'rstm_build.py'
-    if not processor.is_file() or not builder.is_file():
-        print('[ERROR] supporting_tools\\audio_processor.py or rstm_build.py is missing.')
+    if not processor.is_file() or not builder.is_file() or not (tools/'ps_adpcm_encoder.py').is_file():
+        print('[ERROR] supporting_tools/audio_processor.py, rstm_build.py or ps_adpcm_encoder.py is missing.')
         return 1
     print(f'[TITLE THEME] Converting {source.name} -> {dest.name}')
     with tempfile.TemporaryDirectory(prefix='Title_Theme_Convert_', dir=root) as work:

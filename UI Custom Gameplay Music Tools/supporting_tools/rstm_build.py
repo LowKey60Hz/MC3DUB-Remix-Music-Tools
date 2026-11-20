@@ -1,11 +1,8 @@
 #!/usr/bin/env python3
 # Generates an RSTM sound file for Midnight Club 3: DUB Edition and Bully
 # The input type is usually meant to be ADS/SS2 but WAV is also accepted.
-# If the input file is WAV, you must specify a path either for MFAudio or
-# PS2STR from the PS2 SDK.  PS2STR is given priority if both files exist.
-
-MFAUDIO_PATH = r"MFAudio.exe"
-PS2STR_PATH = r"ps2str.exe"
+# Project integration: WAV input uses the Python PS-ADPCM encoder.
+# The original Edness ADS/SS2 container path is retained below.
 
 # Usage:
 #     rstm_build.py  "X:\path\to\sound.ads"
@@ -18,7 +15,7 @@ PS2STR_PATH = r"ps2str.exe"
 
 # Written by Edness   2022-02-26 - 2025-04-07   v1.4.2
 
-import os, random, string, subprocess
+import os
 
 def read_int(file, bytes):
     return int.from_bytes(file.read(bytes), "little")
@@ -39,79 +36,16 @@ def build_rstm(path, output=str(), loopfull=False, loop_start=int(), loop_end=in
         header = file.read(0x4)
         assert header in {b"RIFF", b"SShd"}, ERR_TYPE
 
-        if header == b"SShd":
-            ads_path = path
-            ads_delete = False
-        else:  # convert WAV to ADS/SS2
-            ps2str = PS2STR_PATH.strip() and os.path.isfile(PS2STR_PATH)
-            mfaudio = MFAUDIO_PATH.strip() and os.path.isfile(MFAUDIO_PATH)
-            assert ps2str or mfaudio, ERR_FILE
-            ads_delete = True
-
-            base_path = os.path.split(output)[0]
-            tmp_name = "tmp_" + "".join(random.choices(string.digits + string.ascii_letters, k=12))
-            ads_path = os.path.join(base_path, tmp_name + ".ads")
-
-            assert read_int(file, 0x4) + 0x8 == os.path.getsize(path), ERR_SIZE
-            assert file.read(0x4) == b"WAVE", ERR_TYPE
-
-            chunk_name = file.read(0x4)
-            chunk_size = read_int(file, 0x4)
-            chunk_offs = file.tell()
-
-            assert chunk_name == b"fmt ", ERR_TYPE
-
-            format = read_int(file, 0x2)
-            assert format == 0x0001, ERR_WAVE  # in {0x0001, 0xFFFE}
-            channels = read_int(file, 0x2)
-            assert 1 <= channels <= 2, ERR_WAVE
-            sample_rate = read_int(file, 0x4)
-            assert sample_rate <= 48000, ERR_WAVE
-            #if not sample_rate:
-            #    sample_rate = frequency
-            file.seek(0x22)
-            bit_depth = read_int(file, 0x2)
-            assert bit_depth == 16, ERR_WAVE
-
-            while chunk_name != b"data":
-                file.seek(chunk_offs + chunk_size)
-                assert file.tell() < os.path.getsize(path), ERR_DATA
-                chunk_name = file.read(0x4)
-                chunk_size = read_int(file, 0x4)
-                chunk_offs = file.tell()
-            print(f"Found the data section at 0x{chunk_offs - 0x8:X}.", end="  ")
-
-            # This is mainly for MFAudio, which is hardcoded to find the data section at 0x24
-            if chunk_offs == 0x2C and format == 0x0001:
-                print("Seems to be in the expected format layout.")
-                wav_path = path
-                wav_delete = False
-            else:
-                print("Seems to be stored in a different layout.  Rebuilding file...")
-                wav_path = os.path.join(base_path, tmp_name + ".wav")
-                wav_delete = True
-                file.seek(chunk_offs - 0x8)
-                data = file.read(chunk_size + 0x8)
-                file.seek(0x16)
-                with open(wav_path, "wb") as tmp:
-                    tmp.write(b"RIFF")
-                    write_int(tmp, len(data) + 0x24, 0x4)
-                    tmp.write(b"WAVEfmt ")
-                    write_int(tmp, 0x10, 0x4)
-                    write_int(tmp, 0x1, 0x2)
-                    tmp.write(file.read(0xE))
-                    tmp.write(data)
-
-            if ps2str:
-                # -sr:{sample_rate} doesn't resample it on PS2STR, just pitches it up/down
-                subprocess.check_call((PS2STR_PATH, "e", "-o", "-v", "-a", "-is:16", wav_path, ads_path))
-            elif mfaudio:
-                # MFAudio's cli argument parsing is garbage, it always expects quotes around the input/output
-                cmd = f"\"{MFAUDIO_PATH}\" /OTSS2C /OF{sample_rate} /OC{channels} /OI10 \"{wav_path}\" \"{ads_path}\""
-                os.system(f"\"{cmd}\"")
-
-            if wav_delete:
-                os.remove(wav_path)
+        if header == b"RIFF":
+            from ps_adpcm_encoder import encode_wav
+            def progress(done, total):
+                print(f'[RSM] Encoding {done / total:.0%}', flush=True)
+            print('[RSM] Using the Python PS-ADPCM encoder.', flush=True)
+            encode_wav(path, output, loop=loopfull, loop_start=loop_start,
+                       loop_end=loop_end, replace=True, progress=progress)
+            print('Success! RSTM sound file written to', output, flush=True)
+            return
+        ads_path = path
 
     #with open(ads_path, "rb") as ads, open(output, "wb") as rsm:
     with open(ads_path, "rb") as file:
@@ -172,13 +106,10 @@ def build_rstm(path, output=str(), loopfull=False, loop_start=int(), loop_end=in
         file.write(rsm_header)
         file.write(rsm_data)
 
-    if ads_delete:
-        os.remove(ads_path)
     print("Success! RSTM sound file written to", output)
 
 ERR_ADS2 = "Error! Unsupported ADS/SS2 format.\nInput needs to be a PS-ADPCM encoded stream up to 2 channels with 16 byte interleaving."
 ERR_DATA = "Error! Couldn't locate the WAV data section."
-ERR_FILE = "Error! Please specify the location of MFAudio in MFAUDIO_PATH or PS2STR in PS2STR_PATH in the script."
 ERR_FREQ = "Error! Invalid sample rate."
 ERR_SIZE = "Error! Invalid file size."
 ERR_TYPE = "Error! Not a WAV or ADS/SS2 input file."

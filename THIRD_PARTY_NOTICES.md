@@ -6,6 +6,8 @@ MC3 Ultimate Music Tools is owned and maintained by **LowKey60Hz**. This attribu
 
 ## Bundled tools
 
+Normal WAV-to-RSM conversion now uses the project's `ps_adpcm_encoder.py`, an independent Python implementation validated with the Retail menu probe. It does not execute the legacy encoder binaries listed below. The Edness attribution for the existing `rstm_build.py` ADS/SS2 container implementation is preserved; its WAV entry point has been modified for Python encoding. Any legacy binaries still present retain their separate provenance and terms; they are not required by normal conversion.
+
 The following scripts carry “Written by Edness” in their source headers. Credit: **Edness (EdnessP)**.
 
 | File | Purpose | Local header version |
