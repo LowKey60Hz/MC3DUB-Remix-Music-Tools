@@ -1,9 +1,33 @@
-# MC3DUB-Remix-Music-Tools
-This is a python project to modify music elements of the Midnight Club 3 Dub Edition Remix PS2 Game.
+# MC3 Ultimate Music Tools v1.1
+Customize music in Midnight Club 3: DUB Edition Remix for PS2, then build a modified ISO.
 
-## Launching the GUI
+## Setting up on a new Windows computer
 
-After running `Install_MC3_GUI_Dependencies.ps1`, double-click `Launch.bat` inside `UI Custom Gameplay Music Tools`. Keep its helper at `supporting_tools/Launch_No_Shell.ps1`; the batch launcher calls it automatically to start the GUI without a persistent console window.
+1. Download the project using GitHub **Code → Download ZIP**, then **Extract All** to a writable local folder. Alternatively, clone the repository with Git. Run the tools from the extracted folder, not from inside the ZIP.
+2. Open the **UI Custom Gameplay Music Tools** folder. This contains `Install_MC3_GUI_Dependencies.ps1`, `Launch.bat`, `gui`, and `supporting_tools`. Keep these files and folders together.
+3. Open PowerShell in that folder and run:
+
+   ```powershell
+   powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\Install_MC3_GUI_Dependencies.ps1"
+   ```
+
+   Setup finds Python **3.12**, or attempts to install it with Windows Package Manager (`winget`). It creates a local `.venv`, installs the required Python packages, and checks the imports. An internet connection is needed for installation. If Python is missing and `winget` is unavailable, install Python 3.12 from python.org, reopen PowerShell, and rerun setup. Wait for **Setup complete** before continuing.
+4. Double-click **Launch.bat**. It calls `supporting_tools/Launch_No_Shell.ps1` automatically; keep that helper in place. For later launches, use the same batch file without rerunning setup.
+5. Supply your own supported base ISO: **Retail USA**, **VIP v1.0-C**, or **VIP v1.1-A**. In the app, open **ISO Extraction - Start Here**, select the ISO, and run extraction. Wait for workspace/profile verification to finish.
+6. Use the music menus to stage and apply MP3/WAV tracks. Open **Build ISO** when ready, then test the resulting ISO in PCSX2 or your existing PS2 setup.
+
+Allow disk space for the original ISO, extracted workspace, rebuilt archives, and output ISO. Game ISOs, extracted game files, personal audio, and Python environments are not included in the GitHub download. Development research and test folders are not required to run the application.
+
+### Moving your music from another computer
+
+Use **Export/Import Music** on the old computer to export your staged music library. Copy that ZIP and your base ISO to the new computer. After setup and ISO extraction, import the library and apply its tracks through the music menus. The library does not transfer already modified game archives or an extracted workspace. Run setup on the new computer to create its own `.venv`.
+
+### Setup troubleshooting
+
+- **Python was installed but not detected:** close and reopen PowerShell, then rerun setup.
+- **Python environment not found:** run `Install_MC3_GUI_Dependencies.ps1` from the complete project download.
+- **Launch.bat fails:** keep `gui`, `supporting_tools`, and the launcher together; check `launcher_logs` inside **UI Custom Gameplay Music Tools** for GUI startup errors.
+- **A supporting file is missing:** restore the complete project download and rerun setup.
 
 ## Audio conversion
 
@@ -19,7 +43,7 @@ Win/Lose Replace Existing and Add Tracks use the same adaptive CPU/RAM budget an
 
 An isolated throughput test on this computer converted three copies of a 92.34-second stereo MP3 in 18.27 seconds together versus 45.90 seconds sequentially, with identical RSM bytes. The integrated Add Tracks CLI subsequently completed the same three-track test in 19.03 seconds. Batch gains depend on the computer and track lengths; simultaneous songs can each take longer while the overall batch finishes sooner.
 
-An isolated benchmark on this development computer converted a 92.34-second stereo song in 14.64 seconds versus 37.16 seconds previously (2.54× faster); the complete RSM files were byte-identical. A 12-second excerpt over three runs improved from a median of 4.91 to 2.03 seconds. Actual conversion times depend on audio, CPU and other running work; these measurements cover WAV-to-RSM encoding, not the complete Add Tracks pipeline. The benchmark and frozen reference encoder are in `Encoder Research`; byte-equivalence and worker-recovery checks are in `tests`.
+An isolated benchmark on this development computer converted a 92.34-second stereo song in 14.64 seconds versus 37.16 seconds previously (2.54× faster); the complete RSM files were byte-identical. A 12-second excerpt over three runs improved from a median of 4.91 to 2.03 seconds. Actual conversion times depend on audio, CPU and other running work; these measurements cover WAV-to-RSM encoding, not the complete Add Tracks pipeline.
 
 ## Workspace capacity
 
