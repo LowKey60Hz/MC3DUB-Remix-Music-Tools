@@ -5,8 +5,8 @@ Designed for **Windows** and use with the **PCSX2** emulator.
 
 ## Setup Instructions
 
-1. Download the project using GitHub **Code → Download ZIP**, then **Extract All** to a writable local folder. Alternatively, clone the repository with Git. Run the tools from the extracted folder, not from inside the ZIP.
-2. Open the **UI Custom Gameplay Music Tools** folder. This contains `Install_MC3_GUI_Dependencies.ps1`, `Launch.bat`, `gui`, and `supporting_tools`. Keep these files and folders together.
+1. Download the project using GitHub **Code → Download ZIP**, then **Extract All** to a short, writable local path, such as `C:\MC3Tools`. Alternatively, clone the repository with Git. Run the tools from the extracted folder, not from inside the ZIP. Avoid repeated nested download folders to reduce Windows path-length errors during installation.
+2. Open the project root, containing `README.md`, `Install_MC3_GUI_Dependencies.ps1`, `Launch.bat`, `gui`, and `supporting_tools`. Setup and launch files are directly in this folder; keep them together.
 3. Open PowerShell in that folder and run:
 
    ```powershell
@@ -22,13 +22,14 @@ Allow disk space for the original ISO, extracted workspace, rebuilt archives, an
 
 ### Moving your music from another computer
 
-Use **Export/Import Music** on the old computer to export your staged music library. Copy that ZIP and your base ISO to the new computer. After setup and ISO extraction, import the library and apply its tracks through the music menus. The library does not transfer already modified game archives or an extracted workspace. Run setup on the new computer to create its own `.venv`.
+Use **Export/Import Music** on the old computer to export your staged music library. Copy that ZIP and your base ISO to the new computer. After setup and ISO extraction, import the library and apply its tracks through the music menus. The library does not transfer already modified game archives or an extracted workspace. Run setup on the new computer to create its own `.venv`. If you relocate the application folder, recreate its Python environment at the new location instead of copying the old `.venv`.
 
 ### Setup troubleshooting
 
 - **Python was installed but not detected:** close and reopen PowerShell, then rerun setup.
 - **Python environment not found:** run `Install_MC3_GUI_Dependencies.ps1` from the complete project download.
-- **Launch.bat fails:** keep `gui`, `supporting_tools`, and the launcher together; check `launcher_logs` inside **UI Custom Gameplay Music Tools** for GUI startup errors.
+- **Launch.bat fails:** keep `gui`, `supporting_tools`, and the launcher together at the project root; check the root's `launcher_logs` folder for GUI startup errors.
+- **PySide6 installation reports a missing deeply nested file / long-path warning:** extract into a shorter location such as `C:\MC3Tools` and rerun setup with a fresh `.venv` there.
 - **A supporting file is missing:** restore the complete project download and rerun setup.
 
 ## Audio conversion

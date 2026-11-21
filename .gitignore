@@ -223,21 +223,24 @@ __marimo__/
 /Base ISO's/
 *.iso
 *.dat
-/UI Custom Gameplay Music Tools/ASSETS/
-/UI Custom Gameplay Music Tools/ISO_FILES/
-/UI Custom Gameplay Music Tools/STREAMS/
+/ASSETS/
+/ISO_FILES/
+/STREAMS/
 # Preserve staging directories while ignoring all user audio and other contents.
-/UI Custom Gameplay Music Tools/Custom Music/**
-!/UI Custom Gameplay Music Tools/Custom Music/**/
-!/UI Custom Gameplay Music Tools/Custom Music/**/.gitkeep
-/UI Custom Gameplay Music Tools/Loading Music/**
-!/UI Custom Gameplay Music Tools/Loading Music/**/
-!/UI Custom Gameplay Music Tools/Loading Music/**/.gitkeep
-/UI Custom Gameplay Music Tools/support_logs/
+/Custom Music/**
+!/Custom Music/**/
+!/Custom Music/**/.gitkeep
+/Loading Music/**
+!/Loading Music/**/
+!/Loading Music/**/.gitkeep
+/support_logs/
 # Personal music-library backups and interrupted export staging.
-/UI Custom Gameplay Music Tools/*.zip
-/UI Custom Gameplay Music Tools/.mc3_export_*/
-/UI Custom Gameplay Music Tools/launcher_logs/
+/*.zip
+/.mc3_export_*/
+/launcher_logs/
+# Conversion scratch folders are local workspace data.
+/Music_Add_Temp_*/
+/MC3_Loading_*/
 /VIP ISO Analyzer/Boundary_Probes/
 /VIP ISO Analyzer/Loading_Audio_Probes/
 /VIP ISO Analyzer/VIP_v11A_ASSETS_*/
