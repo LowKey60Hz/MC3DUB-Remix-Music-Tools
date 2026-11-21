@@ -1,7 +1,9 @@
 # MC3 Ultimate Music Tools v1.1
-Customize music in Midnight Club 3: DUB Edition Remix for PS2, then build a modified ISO.
+Add your own music to Midnight Club 3: DUB Edition Remix, including gameplay, garage, main menu, race transitions, and loading screens, then build a modified ISO.
 
-## Setting up on a new Windows computer
+Designed for **Windows** and use with the **PCSX2** emulator.
+
+## Setup Instructions
 
 1. Download the project using GitHub **Code → Download ZIP**, then **Extract All** to a writable local folder. Alternatively, clone the repository with Git. Run the tools from the extracted folder, not from inside the ZIP.
 2. Open the **UI Custom Gameplay Music Tools** folder. This contains `Install_MC3_GUI_Dependencies.ps1`, `Launch.bat`, `gui`, and `supporting_tools`. Keep these files and folders together.
@@ -14,7 +16,7 @@ Customize music in Midnight Club 3: DUB Edition Remix for PS2, then build a modi
    Setup finds Python **3.12**, or attempts to install it with Windows Package Manager (`winget`). It creates a local `.venv`, installs the required Python packages, and checks the imports. An internet connection is needed for installation. If Python is missing and `winget` is unavailable, install Python 3.12 from python.org, reopen PowerShell, and rerun setup. Wait for **Setup complete** before continuing.
 4. Double-click **Launch.bat**. It calls `supporting_tools/Launch_No_Shell.ps1` automatically; keep that helper in place. For later launches, use the same batch file without rerunning setup.
 5. Supply your own supported base ISO: **Retail USA**, **VIP v1.0-C**, or **VIP v1.1-A**. In the app, open **ISO Extraction - Start Here**, select the ISO, and run extraction. Wait for workspace/profile verification to finish.
-6. Use the music menus to stage and apply MP3/WAV tracks. Open **Build ISO** when ready, then test the resulting ISO in PCSX2 or your existing PS2 setup.
+6. Use the music menus to stage and apply MP3/WAV tracks. Open **Build ISO** when ready, then test the resulting ISO in **PCSX2**.
 
 Allow disk space for the original ISO, extracted workspace, rebuilt archives, and output ISO. Game ISOs, extracted game files, personal audio, and Python environments are not included in the GitHub download. Development research and test folders are not required to run the application.
 
