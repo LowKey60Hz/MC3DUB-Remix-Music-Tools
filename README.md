@@ -34,7 +34,7 @@ Use **Export/Import Music** on the old computer to export your staged music libr
 
 ## Audio conversion
 
-Audio conversion now uses the included Python PS-ADPCM encoder through `rstm_build.py`. Normal Gameplay, Garage Shop, Win/Lose and Title Theme conversion does not execute or require `ps2str.exe`, `encvag.dll` or `MFAudio.exe`. Loading-screen RAW conversion is unchanged. The original ADS/SS2 input path and loop CLI options remain available. No Windows Security exceptions are needed for these legacy encoders because normal conversion no longer launches them.
+Gameplay, Garage Shop, Win/Lose and Title Theme conversion use the included Python PS-ADPCM encoder through `rstm_build.py`. No separate encoder executable is required. Loading-screen music uses its separate RAW conversion workflow. The original ADS/SS2 input path and loop CLI options remain available.
 
 Stereo WAV inputs lasting at least 10 seconds use up to two Python workers when two CPU cores are available. Each worker retains its channel's encoding history; unavailable workers fall back to serial encoding. Shorter clips and mono inputs use serial encoding. Batched I/O and encoder-loop optimizations preserve the previous Python encoder's exact RSM output, including loop fields.
 

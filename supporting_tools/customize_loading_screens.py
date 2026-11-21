@@ -132,7 +132,7 @@ def main():
                 except OSError as restore_exc:
                     print(f'[CRITICAL] Could not restore slot {slot}: {restore_exc}')
             return 1
-    print('[DONE] Loading-screen slots updated in ASSETS. Use main menu option 6 to compile DAT archives and build ISO.')
+    print('[DONE] Loading-screen slots updated in ASSETS. Build ISO when ready.')
     return 0
 
 

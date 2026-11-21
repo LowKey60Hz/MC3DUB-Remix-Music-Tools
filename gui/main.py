@@ -1378,8 +1378,7 @@ class Window(QMainWindow):
             self.soundtrack_state.setText('Preview completed. No files changed.')
             reply = QMessageBox.warning(self, 'Confirm soundtrack removal',
                 'Preview succeeded for ' + target + '.\n\n'
-                'Applying may DELETE RSM audio and MODIFY playlists and metadata.\n'
-                'Back up ASSETS and STREAMS before proceeding.\n\n'
+                'Applying may DELETE RSM audio and MODIFY playlists and metadata.\n\n'
                 'Apply these changes?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
             if reply == QMessageBox.Yes:
                 self.log('Confirmed soundtrack removal: ' + target)
@@ -1398,7 +1397,7 @@ class Window(QMainWindow):
                 self.load_soundtrack()
                 QMessageBox.information(self, 'Soundtrack updated',
                     'Removal completed. The soundtrack list is refreshing automatically.\n'
-                    'Build a new ISO to use the changes in-game.')
+                    'Build ISO when ready.')
             else:
                 self.song_status.setText('Automatic refresh unavailable; check the workspace and refresh manually.')
                 self.log('WARNING: Removal succeeded, but the catalog could not be refreshed automatically.')
@@ -1855,7 +1854,7 @@ class Window(QMainWindow):
         reply = QMessageBox.warning(self,'Confirm custom music processing',
             'The existing gameplay engine will run three stages in order:\n'
             '1. Convert gameplay music\n2. Register playlists\n3. Register metadata\n4. Update title theme\n\n'
-            +summary+'\n\nBack up ASSETS and STREAMS before proceeding. Continue?',
+            +summary+'\n\nContinue?',
             QMessageBox.Yes|QMessageBox.No,QMessageBox.No)
         if reply != QMessageBox.Yes: return
         self.custom_steps = list(zip(['Convert gameplay music','Register playlists','Register metadata'],scripts))
@@ -1868,7 +1867,7 @@ class Window(QMainWindow):
         if not self.custom_busy: return
         if self.custom_index == len(self.custom_steps):
             self.custom_busy = False; self.custom_run.setEnabled(True)
-            self.custom_state.setText('Processing completed. Build ISO to test in PCSX2.')
+            self.custom_state.setText('Processing completed. Build ISO when ready.')
             self.log('SUCCESS: All three gameplay music processing stages completed.')
             # Refresh the shared catalog only after all processing stages succeed.
             # Its completion handler updates both gameplay soundtrack tables.
@@ -1877,7 +1876,7 @@ class Window(QMainWindow):
                 self.load_soundtrack()
             else:
                 self.log('WARNING: Automatic soundtrack refresh unavailable; use Refresh Soundtrack when ready.')
-            QMessageBox.information(self,'Custom music complete','Processing completed successfully. Build a modified ISO to test in PCSX2.')
+            QMessageBox.information(self,'Custom music complete','Processing completed successfully. Build ISO when ready.')
             return
         label,filename = self.custom_steps[self.custom_index]
         self.custom_stage_output = ''
@@ -2169,7 +2168,7 @@ class Window(QMainWindow):
         if not script.is_file():
             QMessageBox.warning(self,'Missing utility',str(script)); return
         if QMessageBox.question(self,'Confirm title music update',
-            f'Update the title theme using {files[0].name}?\n\nBack up ASSETS and STREAMS before proceeding.',
+            f'Update the title theme using {files[0].name}?',
             QMessageBox.Yes|QMessageBox.No,QMessageBox.No) != QMessageBox.Yes: return
         self.title_busy = True; self.title_run.setEnabled(False)
         self.title_progress.setValue(0); self.title_state.setText('Updating title theme…')
@@ -2196,11 +2195,11 @@ class Window(QMainWindow):
         self.title_busy = False; self.title_run.setEnabled(True)
         if status == QProcess.NormalExit and code == 0:
             self.title_progress.setValue(1)
-            self.title_state.setText('Title music updated. Build ISO to test in PCSX2.')
+            self.title_state.setText('Title music updated. Build ISO when ready.')
             self.title_preview_use_playlist()
             self.update_dashboard_metrics()
             self.log('SUCCESS: Title music updated independently.')
-            QMessageBox.information(self,'Title music updated','Title music updated. Build a modified ISO to test in PCSX2.')
+            QMessageBox.information(self,'Title music updated','Title music updated. Build ISO when ready.')
         else:
             self.title_state.setText('Title music processing failed — see Activity Log.')
             self.log(f'TITLE MUSIC FAILED: exit code {code}')
@@ -2557,8 +2556,7 @@ class Window(QMainWindow):
             QMessageBox.information(self,'No source music','Add MP3/WAV files to the Win or Lose staging folders first.'); return
         description=f'Mode: {mode.upper()}\nWin: {len(staged["Win"])} source file(s)\nLose: {len(staged["Lose"])} source file(s)'
         if QMessageBox.warning(self,'Confirm Win/Lose changes',description+'\n\n'
-            'The existing engine will update RSM audio and race playlists. '
-            'No permanent audio backups are created. Back up ASSETS and STREAMS first.\n\nProceed?',
+            'The existing engine will update RSM audio and race playlists.\n\nProceed?',
             QMessageBox.Yes|QMessageBox.No,QMessageBox.No) != QMessageBox.Yes: return
         self.race_busy=True; self.race_prompt_answered=False; self.race_prompt_tail=''
         self.race_active_mode = mode
@@ -2602,7 +2600,7 @@ class Window(QMainWindow):
                    +'\n\nIdentical copies are removed together. Remaining songs are kept. '
                    'If none remain, a placeholder keeps the playlists nonempty. '
                    'The one-song and empty Win/Lose cases still require in-game verification. '
-                   'Staged MP3/WAV sources are kept. Build an ISO to test the result.')
+                   'Staged MP3/WAV sources are kept. Build ISO when ready.')
         if QMessageBox.question(self, 'Remove current soundtracks', message,
                                 QMessageBox.Yes | QMessageBox.No, QMessageBox.No) != QMessageBox.Yes:
             return
@@ -2668,9 +2666,9 @@ class Window(QMainWindow):
             self.log('Win/Lose processing completed: no changes were needed.')
             QMessageBox.information(self, 'No changes needed', message+'\nNo game files were changed.')
         elif success:
-            self.race_state.setText('Win/Lose music updated. Build an ISO to test in PCSX2.')
+            self.race_state.setText('Win/Lose music updated. Build ISO when ready.')
             self.log('Win/Lose music operation completed successfully.')
-            QMessageBox.information(self,'Win/Lose music updated','Processing completed. Build a modified ISO and test in PCSX2.')
+            QMessageBox.information(self,'Win/Lose music updated','Processing completed. Build ISO when ready.')
         else:
             self.race_state.setText('Win/Lose processing did not complete; review Activity Log.')
             self.log(f'Win/Lose processing failed or stopped (exit code {code}).')
@@ -2679,7 +2677,7 @@ class Window(QMainWindow):
         if success and no_changes:
             self.race_state.setText(message)
         elif success:
-            self.race_state.setText('Win/Lose music updated. Build an ISO to test in PCSX2.')
+            self.race_state.setText('Win/Lose music updated. Build ISO when ready.')
         else:
             self.race_state.setText('Win/Lose processing did not complete; review Activity Log.')
 
@@ -2996,7 +2994,7 @@ class Window(QMainWindow):
         preview = '\n'.join(f"Slot {x['slot']}: {x['source']}" for x in sorted(assignments, key=lambda x:x['slot']))
         if QMessageBox.warning(self, 'Confirm loading-screen changes',
             f'Method: {self.loading_mode.currentText()}\nAssignments: {len(assignments)}\n\n{preview}\n\n'
-            'These slots will be overwritten in the extracted ASSETS workspace. Back up ASSETS first. Continue?',
+            'The assigned loading-screen slots will be replaced. Continue?',
             QMessageBox.Yes | QMessageBox.No, QMessageBox.No) != QMessageBox.Yes: return
         helper = Path(__file__).parent / 'loading_apply.py'
         if not helper.is_file():
@@ -3050,8 +3048,8 @@ class Window(QMainWindow):
             except OSError: pass
             self.loading_config_path = None
         if status == QProcess.NormalExit and code == 0:
-            self.loading_state.setText('Loading-screen slots updated. Build ISO to test in PCSX2.')
-            QMessageBox.information(self, 'Loading-screen music updated', 'Slot replacements completed. Build a new ISO and test in PCSX2.')
+            self.loading_state.setText('Loading-screen slots updated. Build ISO when ready.')
+            QMessageBox.information(self, 'Loading-screen music updated', 'Slot replacements completed. Build ISO when ready.')
         else:
             self.loading_state.setText('Loading-screen processing stopped; review Activity Log.')
             message = 'Loading-screen processing stopped. Review the Activity Log for details.'
@@ -3323,10 +3321,10 @@ class Window(QMainWindow):
         self.append_build_log('SUCCESS: Verified ISO published to ' + str(output) + '\n')
         self.close_build_log()
         self.build_state.setText('Build complete: ' + str(output))
-        self.status.setText('ISO build complete • Ready for PCSX2 testing')
+        self.status.setText('ISO build complete')
         self.log('SUCCESS: Verified ISO published to ' + str(output))
         self.update_build_controls()
-        QMessageBox.information(self,'ISO build complete',f'Created:\n{output}\n\nTest the ISO in PCSX2.')
+        QMessageBox.information(self,'ISO build complete',f'Created:\n{output}')
 
     def build_failed(self, reason):
         if not self.build_busy: return
@@ -3362,7 +3360,7 @@ class Window(QMainWindow):
         info = QLabel('Save your staged MP3/WAV music as one portable ZIP archive. '
                       'Exports preserve renamed filenames and categories for gameplay, Garage Shop, '
                       'title theme, Win/Lose, and loading music, plus loading-slot selections.\n\n'
-                      'Import restores the staging library. Apply the music through the existing menus '
+                      'Import restores the staged library from an exported music library ZIP file. Apply the music through the existing menus '
                       'after loading an ISO.')
         info.setWordWrap(True); body.addWidget(info)
         row = QHBoxLayout()
@@ -3534,12 +3532,6 @@ class Window(QMainWindow):
             'for archive extraction/building; <code>rstm_build.py</code> for RSM audio building; '
             '<code>strtbl.py</code> for string tables. '
             '<a href="https://ednessp.github.io/tools">Author’s tools and source links</a>.</p>'
-            '<p><b>Sony Computer Entertainment Inc.</b> — <code>ps2str.exe</code>; '
-            'the bundled executable carries a 1999–2000 copyright notice. '
-            '<code>encvag.dll</code> is an external encoder dependency; its authorship/license '
-            'has not been verified from the local distribution.</p>'
-            '<p><b>MFAudio</b> — external PS2 audio conversion tool. '
-            'Author and redistribution terms were not verified from the bundled copy.</p>'
             '<p><b>Python Software Foundation and Python contributors</b> — Python runtime. '
             '<b>Qt Company and Qt contributors</b> — Qt/PySide6 interface and multimedia. '
             '<b>NumPy, SciPy, python-soundfile/libsndfile, and python-sounddevice/PortAudio contributors</b> '

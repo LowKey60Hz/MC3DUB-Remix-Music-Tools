@@ -302,7 +302,7 @@ def main():
             except Exception as recovery:
                 print('[CRITICAL] Rollback failed:', recovery)
             return 1
-    print('[OK] Win/Lose customization complete. Select Option 6 to build the ISO.')
+    print('[OK] Win/Lose customization complete. Build ISO when ready.')
     return 0
 
 

@@ -86,7 +86,7 @@ def main(root, config_file):
             for slot, backup in backups.items():
                 shutil.copyfile(backup, target / f'{slot}.raw')
             raise
-    print('[DONE] Loading-screen slots updated. Build ISO to test.', flush=True)
+    print('[DONE] Loading-screen slots updated. Build ISO when ready.', flush=True)
 
 if __name__ == '__main__':
     try:

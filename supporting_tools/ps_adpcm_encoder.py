@@ -1,7 +1,7 @@
 """PCM16 WAV -> Rockstar RSTM with Python PS-ADPCM.
 
 Independent integer encoder using the format already handled by this project's
-rsm_decoder.py. No Sony/MFAudio code, executable, or DLL is used. Long stereo
+rsm_decoder.py. No external encoder executable or DLL is used. Long stereo
 inputs can use two Python workers, retaining each channel's encoding history.
 Based on the independently tested Python prototype; no legacy encoder required.
 """

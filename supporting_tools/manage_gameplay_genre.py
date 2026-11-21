@@ -149,7 +149,7 @@ def run(root, genre, apply):
     for p in deletions:
         p.unlink()
     print('[OK] Genre playlist entries cleared and eligible unused RSM files deleted.')
-    print('[NEXT] Run your existing Option 5 to rebuild the archives and ISO.')
+    print('[NEXT] Build ISO when ready.')
 
 
 def main():

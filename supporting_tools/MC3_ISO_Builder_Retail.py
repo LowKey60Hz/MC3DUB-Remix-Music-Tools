@@ -472,7 +472,7 @@ def main():
         os.link(staging, output)
         staging.unlink()
         print(f'\nSUCCESS: {output}')
-        print('Next: test in PCSX2, including cinematics and custom music.')
+        print('ISO build complete.')
         return 0
     except Exception:
         print(f'Existing ISO preserved (if present). Incomplete staging file may exist: {staging}')

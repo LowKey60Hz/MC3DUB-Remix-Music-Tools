@@ -186,7 +186,7 @@ def main():
                 print('[PRESERVED] Previous theme RSM is referenced elsewhere or could not be safely verified.')
         else:
             print('[PRESERVED] Previous theme is not tracked as toolkit-managed; no automatic deletion.')
-    print('[DONE] Title theme song updated. Select Option 6 to compile DAT archives and build the ISO.')
+    print('[DONE] Title theme song updated. Build ISO when ready.')
     return 0
 
 if __name__ == '__main__':

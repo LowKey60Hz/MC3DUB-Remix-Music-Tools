@@ -342,7 +342,7 @@ def change(root,action,scope,requested=None):
         # Delete only after the playlist and metadata changes are verified.
         for p in deletions:
             p.unlink()
-    print('[OK] Gameplay/Garage Shop soundtrack changes applied. Rebuild ISO to test.')
+    print('[OK] Gameplay/Garage Shop soundtrack changes applied. Build ISO when ready.')
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)

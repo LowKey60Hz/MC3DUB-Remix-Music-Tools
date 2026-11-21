@@ -159,7 +159,7 @@ def remove(root, kind, selected, apply=False):
     finally:
         if metadata_temp is not None:
             metadata_temp.cleanup()
-    print('[OK] Selected race soundtracks removed. Build an ISO to test.', flush=True)
+    print('[OK] Selected race soundtracks removed. Build ISO when ready.', flush=True)
     return summary
 
 

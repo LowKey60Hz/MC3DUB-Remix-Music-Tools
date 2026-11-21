@@ -72,12 +72,12 @@ def build_rstm(path, output=str(), loopfull=False, loop_start=int(), loop_end=in
         assert not ssbd_size & 0xF, ERR_SIZE
         rsm_data = bytearray(file.read(ssbd_size))
         frame_size = 0x10 * channels
-        # wipe SPU flags written by MFAudio, Bully is very unhappy with these
+        # Clear SPU flags for RSTM playback compatibility.
         rsm_data[0x1::0x10] = bytes(len(rsm_data) // 0x10)
-        # wipe SPU initialization frame written by PS2STR, RSMs don't have these
+        # Remove an optional leading SPU initialization frame.
         if rsm_data.startswith(bytes(frame_size)):
             rsm_data = rsm_data[frame_size:]
-        # wipe SPU end flag frame written by both MFAudio and PS2STR, also not needed
+        # Remove the trailing SPU end frame, which RSTM does not need.
         rsm_data = rsm_data[:-frame_size]
 
     os.makedirs(os.path.split(output)[0], exist_ok=True)
