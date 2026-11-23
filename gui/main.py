@@ -329,6 +329,22 @@ class MusicLibraryWorker(QThread):
             self.failed.emit(str(error))
 
 
+class StagedSongEditDelegate(SoundtrackSelectionDelegate):
+    """Capture unfinished editor text before Qt commits it to the table item."""
+
+    def __init__(self, owner, table):
+        super().__init__(table)
+        self.owner = owner
+
+    def createEditor(self, parent, option, index):
+        editor = super().createEditor(parent, option, index)
+        if isinstance(editor, QLineEdit) and index.column() in (0, 1):
+            source = index.data(Qt.UserRole)
+            row, column = index.row(), index.column()
+            editor.textEdited.connect(lambda text: self.owner.custom_capture_edit(source, row, column, text))
+        return editor
+
+
 class Window(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -1466,6 +1482,7 @@ class Window(QMainWindow):
         self.custom_add_button = QPushButton('Add MP3/WAV…')
         self.custom_add_button.clicked.connect(self.custom_add)
         self.custom_table = StagedMusicTable(self)
+        self.custom_table.setItemDelegate(StagedSongEditDelegate(self, self.custom_table))
         self.custom_table.setHorizontalHeaderLabels(['Artist Name','Song Name','Genre'])
         self.custom_table.horizontalHeader().setSectionResizeMode(0,QHeaderView.Stretch)
         self.custom_table.horizontalHeader().setSectionResizeMode(1,QHeaderView.Stretch)
@@ -1505,6 +1522,8 @@ class Window(QMainWindow):
         return self.root / 'Custom Music' / folder if folder else None
 
     def custom_refresh(self, *_):
+        if not hasattr(self, 'custom_edit_drafts'):
+            self.custom_edit_drafts = {}
         category = self.custom_genre.currentData()
         self.custom_add_button.setEnabled(category is not None and not self.custom_busy)
         folders = [(label, folder) for label, folder in self.custom_genres if category is None or folder == category]
@@ -1525,6 +1544,7 @@ class Window(QMainWindow):
                     artist, song = file.stem.split(' - ', 1)
                 else:
                     artist, song = file.stem, ''
+                artist, song = self.custom_edit_drafts.get(str(file), (artist, song))
                 for column, value in ((0,artist),(1,song)):
                     item = QTableWidgetItem(value)
                     item.setData(Qt.UserRole, str(file))
@@ -1726,6 +1746,49 @@ class Window(QMainWindow):
         self.custom_current_count.setText(f'{table.rowCount()} current soundtrack(s)' if self.soundtrack_songs
                                           else 'No soundtrack catalog loaded yet.')
 
+    @staticmethod
+    def custom_valid_details(artist, song):
+        invalid = set('<>:"/\\|?*')
+        return all(value and not any(c in invalid or ord(c) < 32 for c in value)
+                   and not value.endswith(('.', ' ')) and value not in ('.', '..')
+                   and re.sub(r'[^A-Za-z0-9._()-]', '', value)
+                   for value in (artist, song))
+
+    def custom_invalid_staged_files(self):
+        invalid = []
+        drafts = getattr(self, 'custom_edit_drafts', {})
+        visible = {}
+        table = getattr(self, 'custom_table', None)
+        if table is not None and hasattr(table, 'rowCount'):
+            for row in range(table.rowCount()):
+                artist_item, song_item = table.item(row, 0), table.item(row, 1)
+                if artist_item is not None and song_item is not None:
+                    visible[str(artist_item.data(Qt.UserRole))] = (artist_item.text().strip(), song_item.text().strip())
+        for _, folder in self.custom_genres:
+            directory = self.root/'Custom Music'/folder
+            if not directory.is_dir():
+                continue
+            for file in sorted(directory.iterdir(), key=lambda p: p.name.casefold()):
+                if not file.is_file() or file.suffix.lower() not in ('.mp3', '.wav'):
+                    continue
+                parts = file.stem.split('-', 1)
+                fields = drafts.get(str(file), visible.get(str(file), tuple(p.strip() for p in parts) if len(parts) == 2 else (file.stem, '')))
+                artist, song = fields
+                if not self.custom_valid_details(artist, song):
+                    invalid.append(file.name)
+                elif str(file) in drafts:
+                    # A valid draft is retained only if the filename could not be committed.
+                    invalid.append(file.name)
+        return invalid
+
+    def custom_capture_edit(self, source, row, column, text):
+        if not hasattr(self, 'custom_edit_drafts'):
+            self.custom_edit_drafts = {}
+        fields = list(self.custom_edit_drafts.get(str(source),
+            tuple(self.custom_table.item(row, i).text().strip() for i in (0, 1))))
+        fields[column] = text.strip()
+        self.custom_edit_drafts[str(source)] = tuple(fields)
+
     def custom_rename_item(self, item):
         if item.column() not in (0, 1): return
         old = Path(item.data(Qt.UserRole) or '')
@@ -1735,33 +1798,23 @@ class Window(QMainWindow):
         row = item.row()
         artist = self.custom_table.item(row, 0).text().strip()
         song = self.custom_table.item(row, 1).text().strip()
-        if not artist or not song:
-            QMessageBox.warning(self, 'Invalid song details',
-                'Both Artist Name and Song Name are required. Use Artist - Song filenames.')
-            self.custom_refresh(); return
-        invalid = set('<>:"/\\|?*')
-        def valid(value):
-            return (not value or (not any(c in invalid or ord(c) < 32 for c in value)
-                                  and not value.endswith(('.', ' '))
-                                  and value not in ('.', '..')))
-        if not valid(artist) or not valid(song):
-            QMessageBox.warning(self, 'Invalid song details',
-                'Windows filename characters \\ / : * ? " < > | are not allowed. '
-                'Names also cannot end with a period or space.')
-            self.custom_refresh(); return
         if self.custom_busy or self.title_busy or self.build_busy or self.extraction_busy or self.race_busy or self.soundtrack_busy:
             QMessageBox.warning(self, 'Processing in progress', 'Wait for processing to finish before renaming files.')
             self.custom_refresh(); return
+        if not hasattr(self, 'custom_edit_drafts'):
+            self.custom_edit_drafts = {}
+        self.custom_edit_drafts[str(old)] = (artist, song)
+        if not self.custom_valid_details(artist, song):
+            return
         stem = f'{artist} - {song}'
         dest = old.with_name(f'{stem}{old.suffix}')
         if dest.exists() and dest != old:
-            QMessageBox.warning(self, 'Filename already exists',
-                f'Cannot rename because {dest.name} already exists.')
-            self.custom_refresh(); return
+            return
         try:
             if dest != old:
                 old.rename(dest)
                 self.log(f'Renamed staged music: {old.name} -> {dest.name}')
+            self.custom_edit_drafts.pop(str(old), None)
         except OSError as exc:
             QMessageBox.critical(self, 'Rename failed', str(exc))
         self.custom_refresh()
@@ -1835,6 +1888,12 @@ class Window(QMainWindow):
 
     def custom_begin(self):
         if self.custom_busy or self.title_busy or self.build_busy or self.extraction_busy or self.race_busy or self.soundtrack_busy: return
+        invalid = self.custom_invalid_staged_files()
+        if invalid:
+            message = '\n'.join(invalid)
+            self.log('Staged songs need correction:\n'+message)
+            QMessageBox.warning(self, 'Staged songs need correction', message)
+            return
         if not self.profile_verified:
             QMessageBox.warning(self,'Profile not verified','Wait for automatic SHA-256 verification.'); return
         if not all((self.root/name).is_dir() for name in ('ASSETS','STREAMS','ISO_FILES')):
@@ -1853,14 +1912,14 @@ class Window(QMainWindow):
         summary = '\n'.join(f'{name}: {count}' for name,count in counts.items() if count)
         reply = QMessageBox.warning(self,'Confirm custom music processing',
             'The existing gameplay engine will run three stages in order:\n'
-            '1. Convert gameplay music\n2. Register playlists\n3. Register metadata\n4. Update title theme\n\n'
+            '1. Convert gameplay music\n2. Register playlists\n3. Register metadata\n\n'
             +summary+'\n\nContinue?',
             QMessageBox.Yes|QMessageBox.No,QMessageBox.No)
         if reply != QMessageBox.Yes: return
         self.custom_steps = list(zip(['Convert gameplay music','Register playlists','Register metadata'],scripts))
         self.custom_busy = True; self.custom_index = 0; self.custom_run.setEnabled(False)
         self.custom_progress.setValue(0)
-        self.log('Custom music processing confirmed; starting existing four-stage pipeline.')
+        self.log('Custom music processing confirmed; starting three-stage pipeline.')
         self.custom_next()
 
     def custom_next(self):
